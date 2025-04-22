@@ -3,19 +3,18 @@ import sqlalchemy
 from flask_login import UserMixin
 from sqlalchemy import orm
 from sqlalchemy_serializer import SerializerMixin
-from werkzeug.security import generate_password_hash, check_password_hash
 from .db_session import SqlAlchemyBase
 
 
-class Employer(SqlAlchemyBase, UserMixin, SerializerMixin):
-    __tablename__ = "employers"
+class Student(SqlAlchemyBase, UserMixin, SerializerMixin):
+    __tablename__ = "students"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"))
-    title = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    address = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    boss_nsp = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    student_nsp = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    born = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True)
     phone_num = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    scope = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    about = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    employer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("employers.id"))
 
     ...

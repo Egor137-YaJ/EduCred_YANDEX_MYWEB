@@ -17,4 +17,5 @@ class University(SqlAlchemyBase, UserMixin, SerializerMixin):
     boss_nsp = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     type = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
-    ...
+    user = orm.relationship("User", back_populates="university")
+    achievements = orm.relationship("Achievement", back_populates="university")

@@ -17,4 +17,6 @@ class Student(SqlAlchemyBase, UserMixin, SerializerMixin):
     about = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     employer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("employers.id"))
 
-    ...
+    user = orm.relationship("User", back_populates="student")
+    employer = orm.relationship("Employer", back_populates="students")
+    achievements = orm.relationship("Achievement", back_populates="student")

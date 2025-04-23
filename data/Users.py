@@ -15,7 +15,9 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     role = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
-    ...
+    university = orm.relationship("University", back_populates="user", uselist=False)
+    employer = orm.relationship("Employer", back_populates="user", uselist=False)
+    student = orm.relationship("Student", back_populates="user", uselist=False)
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)

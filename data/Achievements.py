@@ -19,4 +19,5 @@ class Achievement(SqlAlchemyBase, UserMixin, SerializerMixin):
     student_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("students.id"))
     university_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("universities.id"))
 
-    ...
+    student = orm.relationship("Student", back_populates="achievements")
+    university = orm.relationship("University", back_populates="achievements")

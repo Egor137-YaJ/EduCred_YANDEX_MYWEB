@@ -18,4 +18,5 @@ class Employer(SqlAlchemyBase, UserMixin, SerializerMixin):
     phone_num = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     scope = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
-    ...
+    user = orm.relationship("User", back_populates="employer")
+    students = orm.relationship("Student", back_populates="employer")

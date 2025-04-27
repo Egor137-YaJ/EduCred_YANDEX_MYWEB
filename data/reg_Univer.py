@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, PasswordField, IntegerField, SelectField
+from wtforms import SubmitField, PasswordField, IntegerField, SelectField, StringField
 from wtforms.fields import EmailField
-from wtforms.validators import DataRequired, ValidationError
+from wtforms.validators import DataRequired, ValidationError, equal_to
 
 
 def validate_choice(form, field):
@@ -20,5 +20,5 @@ class RegisterUniverForm(FlaskForm):
                        validators=[DataRequired(), validate_choice])
     email = EmailField('Почта', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
-    password_again = PasswordField('Повторите пароль', validators=[DataRequired()])
+    password_again = PasswordField('Повторите пароль', validators=[DataRequired(), equal_to('password')])
     submit = SubmitField('Подтвердить')

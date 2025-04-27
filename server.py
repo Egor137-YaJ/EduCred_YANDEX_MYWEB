@@ -1,28 +1,84 @@
 import os
-from flask import Flask
-from flask_restful import Api
+from flask import Flask, render_template, redirect
+from flask_login import LoginManager, login_user, login_required, logout_user
+
 from data import db_session
+from data.reg_Univer import RegisterUniverForm
+from data.reg_Student import RegisterStudentForm
+from data.reg_Employer import RegisterEmployerForm
+from data.login_form import LoginForm
+from data.Users import User
+from data.Students import Student
+from data.Universities import University
+from data.Employers import Employer
+from data.Achievements import Achievement
+
 
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "yandexlyceum_secret_key"
-db_session.global_init("db/EduCred_data.db")
 
-api = Api(app, catch_all_404s=True)
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+...
+
+
+@app.route('/register_university', methods=['GET', 'POST'])
+def reqister_university():
+    form = RegisterUniverForm()
+    if form.validate_on_submit():
+        if form.password.data != form.password_again.data:
+            return render_template('register_university.html', title='University Registration', form=form,
+                                   message="Passwords don't match")
+        db_sess = db_session.create_session()
+        if db_sess.query(User).filter(User.email == form.email.data).first():
+            return render_template('register.html', title='University Registration', form=form,
+                                   message="This Account already exists")
+        if db_sess.query(User).filter(User.password == form.password.data).first():
+            return render_template('register.html', title='University Registration', form=form,
+                                   message="This Account already exists")
+        if db_sess.query(University).filter(University.INN == form.INN.data).first():
+            return render_template('register.html', title='University Registration', form=form,
+                                   message="This University already exists")
+        user = User(
+            email=form.email.data,
+            role='university',
+        )
+        user.set_password(form.password.data)
+        db_sess.add(user)
+
+        #подтягивание названия, адреса и ФИО руководителя по стороннему API используя form.INN.data
+        ...
+        title = ...
+        address = ...
+        boss_nsp = ...
+
+        univer = University(
+            user_id=user.id,
+            INN=form.INN.data,
+            title=title,
+            adress=address,
+            boss_nsp=boss_nsp,
+            type=form.type.data
+        )
+        db_sess.add(univer)
+        db_sess.commit()
+        return redirect('/login')
+    return render_template('register_university.html', title='University Registration', form=form)
+
+
+...
 
 
 def main():
-    api.add_resource(users_resource.UsersListResource, '/api/v2/users')
-    api.add_resource(users_resource.UsersResource, '/api/v2/users/<int:user_id>')
-
-    api.add_resource(jobs_resource.JobsListResource, '/api/v2/jobs')
-    api.add_resource(jobs_resource.JobsResource, '/api/v2/jobs/<int:job_id>', methods=['GET', 'PUT', 'DELETE'])
-
+    db_session.global_init("db/EduCred_data.db")
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    main()
 
 
 # My web: https://precious-fluoridated-muskox.glitch.me/

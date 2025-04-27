@@ -12,10 +12,11 @@ class University(SqlAlchemyBase, UserMixin, SerializerMixin):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"))
-    title = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    address = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    boss_nsp = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    type = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    INN = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    title = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    address = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    boss_nsp = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    type = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
     user = orm.relationship("User", back_populates="university")
     achievements = orm.relationship("Achievement", back_populates="university")

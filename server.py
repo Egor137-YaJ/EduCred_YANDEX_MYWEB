@@ -57,6 +57,11 @@ def reqister_university():
         title, address, boss_nsp = get_university_info_by_inn(form.INN.data)
         type = dict(form.type.choices).get(form.type.data)
 
+        if 'Ошибка' in ' '.join([title, address, boss_nsp]):
+            return render_template('register_university.html', title='University Registration',
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Error in INN request - may be non existing INN")
+
         if type.lower() not in title.lower():
             return render_template('register_university.html', title='University Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),

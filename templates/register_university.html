@@ -2,11 +2,21 @@
 
 {% block content %}
 <h1 align="center">Регистрация ОУ</h1>
+
+{% if message %}
+<form class="reg_form">
+    <div class="alert alert-danger" role="alert">
+        {{ message }}
+    </div>
+</form>
+{% endif %}
+
 <form class="reg_form" action="" method="post" novalidate>
     <div>
         {{ form.csrf_token }}
     </div>
-    {% for field in form if field.name != 'csrf_token' and field.name != 'submit'%}
+
+    {% for field in form if field.name != 'csrf_token' and field.name != 'submit' %}
     <div>
         <h3>{{ field.label() }}</h3>
         {{ field() }}

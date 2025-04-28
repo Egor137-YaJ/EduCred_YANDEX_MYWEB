@@ -12,7 +12,7 @@ from data.Students import Student
 from data.Universities import University
 from data.Employers import Employer
 from data.Achievements import Achievement
-
+from data.find_info_by_INN import get_university_info_by_inn
 
 
 app = Flask(__name__)
@@ -24,58 +24,75 @@ app.config["SECRET_KEY"] = "yandexlyceum_secret_key"
 ...
 
 
+
+@app.route('/home')
+@app.route('/')
+def home():
+    return render_template('home.html', title='Home Page')
+
+
 @app.route('/register_university', methods=['GET', 'POST'])
 def reqister_university():
     form = RegisterUniverForm()
     if form.validate_on_submit():
-        ...
-        # if form.password.data != form.password_again.data:
-        #     return render_template('register_university.html', title='University Registration', form=form,
-        #                            message="Passwords don't match")
-        # db_sess = db_session.create_session()
-        # if db_sess.query(User).filter(User.email == form.email.data).first():
-        #     return render_template('register.html', title='University Registration', form=form,
-        #                            message="This Account already exists")
-        # if db_sess.query(User).filter(User.password == form.password.data).first():
-        #     return render_template('register.html', title='University Registration', form=form,
-        #                            message="This Account already exists")
-        # if db_sess.query(University).filter(University.INN == form.INN.data).first():
-        #     return render_template('register.html', title='University Registration', form=form,
-        #                            message="This University already exists")
-        # user = User(
-        #     email=form.email.data,
-        #     role='university',
-        # )
-        # user.set_password(form.password.data)
-        # db_sess.add(user)
-        #
-        # #подтягивание названия, адреса и ФИО руководителя по стороннему API используя form.INN.data
-        # ...
-        # title = ...
-        # address = ...
-        # boss_nsp = ...
-        #
-        # univer = University(
-        #     user_id=user.id,
-        #     INN=form.INN.data,
-        #     title=title,
-        #     adress=address,
-        #     boss_nsp=boss_nsp,
-        #     type=form.type.data
-        # )
-        # db_sess.add(univer)
-        # db_sess.commit()
-        # return redirect('/login')
-    return render_template('register_university.html', title='University Registration', form=form, style=url_for('static', filename='css/style.css'))
+        if form.password.data != form.password_again.data:
+            return render_template('register_university.html', title='University Registration',
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Passwords don't match")
+        db_sess = db_session.create_session()
+
+        if db_sess.query(University).filter(University.INN == form.INN.data).first():
+            return render_template('register_university.html', title='University Registration',
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="This University already exists")
+        if db_sess.query(User).filter(User.email == form.email.data).first():
+            return render_template('register_university.html', title='University Registration',
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this email already exists")
+        if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
+            return render_template('register_university.html', title='University Registration',
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
+
+        title, address, boss_nsp = get_university_info_by_inn(form.INN.data)
+        type = dict(form.type.choices).get(form.type.data)
+
+        if type.lower() not in title.lower():
+            return render_template('register_university.html', title='University Registration',
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Types doesn't match")
+
+        user = User(
+            email=form.email.data,
+            role='university'
+        )
+        user.set_password(form.password.data)
+        db_sess.add(user)
+        db_sess.commit()
+
+        univer = University(
+            user_id=user.id,
+            INN=form.INN.data,
+            title=title,
+            address=address,
+            boss_nsp=boss_nsp,
+            type=type
+        )
+        db_sess.add(univer)
+        db_sess.commit()
+        return redirect('/home')
+    return render_template('register_university.html', title='University Registration',
+                           form=form, style=url_for('static', filename='css/style.css'))
 
 
 ...
 
 
 def main():
-    # db_session.global_init("db/EduCred_data.db")
-    port = int(os.environ.get("PORT", 8000))
-    app.run(host='0.0.0.0', port=port)
+    db_session.global_init("db/EduCred_data.db")
+    # port = int(os.environ.get("PORT", 8000))
+    # app.run(host='0.0.0.0', port=port)
+    app.run()
 
 
 if __name__ == '__main__':

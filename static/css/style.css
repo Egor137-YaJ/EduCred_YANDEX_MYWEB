@@ -4,3 +4,13 @@ form.reg_form {
     max-width: 450px;
     padding: 10px;
 }
+
+form.reg_form input,
+form.reg_form select,
+form.reg_form textarea {
+    width: 100%;
+    padding: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+    margin-bottom: 7px;
+}

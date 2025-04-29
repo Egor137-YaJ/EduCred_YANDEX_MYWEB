@@ -3,8 +3,8 @@
 
 {% block content %}
 <br><h1>Добро пожаловать</h1>
-<br><h3><a href={{url_for('register_university')}}>Вход</a></h3>
-<h3><a href={{url_for('register_university')}}>Регистрация ОУ</a></h3>
-<h3><a href={{url_for('register_university')}}>Регистрация Работодателя</a></h3>
-<h3><a href={{url_for('register_university')}}>Регистрация Студента</a></h3>
+<br><h3><a href={{url_for('login')}}>Вход</a></h3>
+<h3><a href={{url_for('register_university')}}>Регистрация Образовательного учреждения</a></h3>
+<h3><a href={{url_for('register_employer')}}>Регистрация Работодателя</a></h3>
+<h3><a href={{url_for('register_student')}}>Регистрация Студента</a></h3>
 {% endblock %}

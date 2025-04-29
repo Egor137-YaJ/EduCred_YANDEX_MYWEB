@@ -25,6 +25,12 @@ login_manager.init_app(app)
 ...
 
 
+@login_manager.user_loader
+def load_user(user_id):
+    db_sess = db_session.create_session()
+    return db_sess.query(User).get(user_id)
+
+
 @app.route('/home')
 @app.route('/')
 def home():
@@ -232,9 +238,8 @@ def university_workspace():
 
 def main():
     db_session.global_init("db/EduCred_data.db")
-    # port = int(os.environ.get("PORT", 8000))
-    # app.run(host='0.0.0.0', port=port)
-    app.run()
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host='0.0.0.0', port=port)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 import requests
 
-def get_university_info_by_inn(inn):
+
+def get_info_by_inn(inn):
     url = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party"
     token = "d7a26c02b1fcfcc8aae5223ef09ae3737377dccb"
     headers = {
@@ -21,7 +22,6 @@ def get_university_info_by_inn(inn):
             address = suggestion['data']['address']['value']
             boss_nsp = suggestion['data']['management']['name'] if suggestion['data'].get(
                 'management') else "Не найдено"
-
             return title, address, boss_nsp
         else:
             return "Не найдено", "Не найдено", "Не найдено"

@@ -3,7 +3,7 @@ from flask import Flask, render_template, redirect, url_for, session
 from flask_login import LoginManager, login_user, login_required, logout_user
 
 from data import db_session
-from data.reg_Univer import RegisterUniverForm
+from data.reg_Univer import RegisterUniverForm, choices
 from data.reg_Student import RegisterStudentForm
 from data.reg_Employer import RegisterEmployerForm
 from data.login_form import LoginForm
@@ -12,7 +12,7 @@ from data.Students import Student
 from data.Universities import University
 from data.Employers import Employer
 from data.Achievements import Achievement
-from data.find_info_by_INN import get_university_info_by_inn
+from data.find_info_by_INN import get_info_by_inn
 
 
 app = Flask(__name__)
@@ -59,16 +59,23 @@ def register_university():
                                     form=form, style=url_for('static', filename='css/style.css'),
                                     message="Account with this password already exists")
 
-        title, address, boss_nsp = get_university_info_by_inn(form.INN.data)
+        title, address, boss_nsp = get_info_by_inn(form.INN.data)
         type = dict(form.type.choices).get(form.type.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
              return render_template('register_university.html', title='University Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Error in INN request - may be non existing INN")
-        if type.lower() not in title.lower():
-            return render_template('register_university.html', title='University Registration',
-                                   form=form, style=url_for('static', filename='css/style.css'),
-                                   message="Types doesn't match")
+
+        if type.lower() not in ['онлайн-курс', 'другое']:
+            if type.lower() not in title.lower():
+                return render_template('register_university.html', title='University Registration',
+                                       form=form, style=url_for('static', filename='css/style.css'),
+                                       message="Types doesn't match")
+        else:
+            if any(type_n.lower() in title.lower() for type_n in list(map(str.lower, choices))):
+                return render_template('register_university.html', title='University Registration',
+                                       form=form, style=url_for('static', filename='css/style.css'),
+                                       message="Types doesn't match")
         user = User(
             email=form.email.data,
             role='university'
@@ -79,7 +86,7 @@ def register_university():
         univer = University(
             user_id=user.id,
             INN=form.INN.data,
-            title=title,
+            title=title.split(';')[0],
             address=address,
             boss_nsp=boss_nsp,
             type=type
@@ -94,59 +101,54 @@ def register_university():
 
 @app.route('/register_employer', methods=['GET', 'POST'])
 def register_employer():
-    ...
-"""
     form = RegisterEmployerForm()
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
-            return render_template('register_employer.html', title='University Registration',
+            return render_template('register_employer.html', title='Employer Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Passwords don't match")
         db_sess = db_session.create_session()
-        if db_sess.query(University).filter(University.INN == form.INN.data).first():
-            return render_template('register_university.html', title='University Registration',
+        if db_sess.query(University).filter(Employer.INN == form.INN.data).first():
+            return render_template('register_employer.html', title='Employer Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
-                                   message="This University already exists")
+                                   message="This Employer already exists")
         if db_sess.query(User).filter(User.email == form.email.data).first():
-            return render_template('register_university.html', title='University Registration',
+            return render_template('register_employer.html', title='Employer Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-            return render_template('register_university.html', title='University Registration',
+            return render_template('register_employer.html', title='Employer Registration',
                                     form=form, style=url_for('static', filename='css/style.css'),
                                     message="Account with this password already exists")
 
-        title, address, boss_nsp = get_university_info_by_inn(form.INN.data)
-        type = dict(form.type.choices).get(form.type.data)
+        title, address, boss_nsp = get_info_by_inn(form.INN.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-             return render_template('register_university.html', title='University Registration',
+             return render_template('register_employer.html', title='Employer Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Error in INN request - may be non existing INN")
-        if type.lower() not in title.lower():
-            return render_template('register_university.html', title='University Registration',
-                                   form=form, style=url_for('static', filename='css/style.css'),
-                                   message="Types doesn't match")
+
         user = User(
             email=form.email.data,
-            role='university'
+            role='employer'
         )
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
-        univer = University(
+        employer = Employer(
             user_id=user.id,
             INN=form.INN.data,
             title=title,
             address=address,
             boss_nsp=boss_nsp,
-            type=type
+            phone_num=form.phone_number.data,
+            scope=form.speciality.data,
         )
-        db_sess.add(univer)
+        db_sess.add(employer)
         db_sess.commit()
-        return redirect('/home')
+        return redirect('/employer_workspace')
     return render_template('register_employer.html', title='Employer Registration',
                            form=form, style=url_for('static', filename='css/style.css'))
-"""
+
 
 
 @app.route('/register_student', methods=['GET', 'POST'])
@@ -233,6 +235,13 @@ def login():
 def university_workspace():
     ...
     return render_template('university_workspace.html',
+                           joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
+
+
+@app.route('/employer_workspace')
+def employer_workspace():
+    ...
+    return render_template('employer_workspace.html',
                            joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
 
 

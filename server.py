@@ -145,10 +145,10 @@ def register_employer():
         )
         db_sess.add(employer)
         db_sess.commit()
+        session['self'] = employer.title
         return redirect('/employer_workspace')
     return render_template('register_employer.html', title='Employer Registration',
                            form=form, style=url_for('static', filename='css/style.css'))
-
 
 
 @app.route('/register_student', methods=['GET', 'POST'])

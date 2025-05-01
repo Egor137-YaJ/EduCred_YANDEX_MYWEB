@@ -83,10 +83,11 @@ def register_university():
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
+        title = title.split(';')[0] if ';' in title else title.split(',')[0]
         univer = University(
             user_id=user.id,
             INN=form.INN.data,
-            title=title.split(';')[0],
+            title=title,
             address=address,
             boss_nsp=boss_nsp,
             type=type
@@ -108,7 +109,7 @@ def register_employer():
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Passwords don't match")
         db_sess = db_session.create_session()
-        if db_sess.query(University).filter(Employer.INN == form.INN.data).first():
+        if db_sess.query(Employer).filter(Employer.INN == form.INN.data).first():
             return render_template('register_employer.html', title='Employer Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="This Employer already exists")
@@ -153,59 +154,53 @@ def register_employer():
 
 @app.route('/register_student', methods=['GET', 'POST'])
 def register_student():
-    ...
-"""
-    form = RegisterEmployerForm()
+    form = RegisterStudentForm()
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
-            return render_template('register_employer.html', title='University Registration',
+            return render_template('register_student.html', title='Student Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Passwords don't match")
         db_sess = db_session.create_session()
-        if db_sess.query(University).filter(University.INN == form.INN.data).first():
-            return render_template('register_university.html', title='University Registration',
+        if db_sess.query(Student).filter(Student.student_nsp == form.NSP.data,
+                                         Student.born == form.born_date.data,
+                                         Student.phone_num == form.phone_number.data).first():
+            return render_template('register_student.html', title='Student Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
-                                   message="This University already exists")
+                                   message="This Student already exists")
         if db_sess.query(User).filter(User.email == form.email.data).first():
-            return render_template('register_university.html', title='University Registration',
+            return render_template('register_student.html', title='Student Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-            return render_template('register_university.html', title='University Registration',
+            return render_template('register_student.html', title='Student Registration',
                                     form=form, style=url_for('static', filename='css/style.css'),
                                     message="Account with this password already exists")
 
-        title, address, boss_nsp = get_university_info_by_inn(form.INN.data)
-        type = dict(form.type.choices).get(form.type.data)
-        if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-             return render_template('register_university.html', title='University Registration',
+        if form.born_date.data.year < 1940:
+             return render_template('register_student.html', title='Student Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
-                                   message="Error in INN request - may be non existing INN")
-        if type.lower() not in title.lower():
-            return render_template('register_university.html', title='University Registration',
-                                   form=form, style=url_for('static', filename='css/style.css'),
-                                   message="Types doesn't match")
+                                   message="Non existing botn date")
+
         user = User(
             email=form.email.data,
-            role='university'
+            role='student'
         )
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
-        univer = University(
+        student = Student(
             user_id=user.id,
-            INN=form.INN.data,
-            title=title,
-            address=address,
-            boss_nsp=boss_nsp,
-            type=type
+            student_nsp=form.NSP.data,
+            born=form.born_date.data,
+            phone_num=form.phone_number.data,
+            about=form.about.data,
         )
-        db_sess.add(univer)
+        db_sess.add(student)
         db_sess.commit()
-        return redirect('/home')
-    return render_template('register_employer.html', title='Employer Registration',
+        session['self'] = student.student_nsp
+        return redirect('/student_workspace')
+    return render_template('register_student.html', title='Student Registration',
                            form=form, style=url_for('static', filename='css/style.css'))
-"""
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -242,6 +237,13 @@ def university_workspace():
 def employer_workspace():
     ...
     return render_template('employer_workspace.html',
+                           joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
+
+
+@app.route('/student_workspace')
+def student_workspace():
+    ...
+    return render_template('student_workspace.html',
                            joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
 
 

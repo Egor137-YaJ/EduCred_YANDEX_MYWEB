@@ -83,7 +83,7 @@ def register_university():
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
-        title = title.split(';')[0] if ';' in title else title.split(',')[0]
+        title = title.split(';')[1] if ';' in title else title.split(', ')[1]
         univer = University(
             user_id=user.id,
             INN=form.INN.data,

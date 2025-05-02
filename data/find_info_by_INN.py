@@ -20,7 +20,12 @@ group_entity_abbreviations = [
     "СНТ",  # Садоводческое некоммерческое товарищество
     "ОП",   # Обособленное подразделение
 ]
-with open('data/abbreviations.json', encoding='UTF-8') as f:
+try:
+    f_path = open('abbreviations.json')
+    path = 'abbreviations.json'
+except FileNotFoundError:
+    path = 'data/abbreviations.json'
+with open(path, encoding='UTF-8') as f:
     all_abbreviations = json.load(f)
 
 
@@ -52,7 +57,7 @@ def get_info_by_inn(inn):
             suggestion = result['suggestions'][0]
             title = suggestion['value']
             address = suggestion['data']['address']['value']
-
+            print(suggestion)
             boss_nsp = suggestion['data']['management']['name'] if suggestion['data'].get(
                 'management') else suggestion['data']['name']['full']
             boss_nsp = change_if_full_comp(boss_nsp) if suggestion['data']['opf']['short'] in group_entity_abbreviations else boss_nsp

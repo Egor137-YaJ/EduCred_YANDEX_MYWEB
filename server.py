@@ -35,6 +35,7 @@ def load_user(user_id):
 @app.route('/home')
 @app.route('/')
 def home():
+    logout_user()
     return render_template('home.html', title='Home Page', style=url_for('static', filename='css/style.css'))
 
 
@@ -95,12 +96,7 @@ def register_university():
         )
         db_sess.add(univer)
         db_sess.commit()
-        ...
-        session['self_name'] = univer.title
-        session['self_id'] = user.university.id
-        session['self'] = user
-        ...
-        load_user(user_id=user.id)
+        login_user(user)
         return redirect('/university_workspace')
     return render_template('register_university.html', title='University Registration',
                            form=form, style=url_for('static', filename='css/style.css'))
@@ -152,12 +148,7 @@ def register_employer():
         )
         db_sess.add(employer)
         db_sess.commit()
-        ...
-        session['self_name'] = employer.title
-        session['self_id'] = user.employer.id
-        session['self'] = user
-        ...
-        load_user(user_id=user.id)
+        login_user(user)
         return redirect('/employer_workspace')
     return render_template('register_employer.html', title='Employer Registration',
                            form=form, style=url_for('static', filename='css/style.css'))
@@ -208,12 +199,7 @@ def register_student():
         )
         db_sess.add(student)
         db_sess.commit()
-        ...
-        session['self_id'] = user.student.id
-        session['self_name'] = student.student_nsp
-        session['self'] = user
-        ...
-        load_user(user_id=user.id)
+        login_user(user)
         return redirect('/student_workspace')
     return render_template('register_student.html', title='Student Registration',
                            form=form, style=url_for('static', filename='css/style.css'))
@@ -227,28 +213,13 @@ def login():
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
             if user.role == 'student':
-                ...
-                session['self_name'] = user.student.student_nsp
-                session['self_id'] = user.student.id
-                session['self'] = user
-                ...
-                load_user(user_id=user.id)
+                login_user(user)
                 return redirect("/student_workspace")
             elif user.role == 'university':
-                ...
-                session['self_name'] = user.university.title
-                session['self_id'] = user.university.id
-                session['self'] = user
-                ...
-                load_user(user_id=user.id)
+                login_user(user)
                 return redirect("/university_workspace")
             elif user.role == 'employer':
-                ...
-                session['self_name'] = user.employer.title
-                session['self_id'] = user.employer.id
-                session['self'] = user
-                ...
-                load_user(user_id=user.id)
+                login_user(user)
                 return redirect("/employer_workspace")
             return redirect('/home')
         return render_template('login.html', message="Wrong login or password",
@@ -258,74 +229,62 @@ def login():
 
 
 @app.route('/university_workspace')
+@login_required
 def university_workspace():
     ...
     return render_template('university_workspace.html',
-                           joined_title=session.get('self_name'), style=url_for('static', filename='css/style.css'))
+                           joined_title=current_user.university.title, style=url_for('static', filename='css/style.css'))
 
 
 @app.route('/employer_workspace', methods=['GET', 'POST'])
 @login_required
 def employer_workspace():
-    form = StudentSearchForm()
     achievements_data = []
-    print(current_user.email)
+    # current_user работает единажды в сессии, так что теперь его невозможно подргузить, привязываем его к сессии на прямую
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).get(current_user.id)
+    employer = user.employer
 
-    if form.validate_on_submit():
-        student_id = form.student_id.data.strip()
-        db_sess = db_session.create_session()
+    if request.method == 'POST':
+        student_id = request.form.get('student_id', '').strip()
         student = db_sess.query(Student).filter(Student.id == student_id).first()
 
         if not student:
             flash("Студент с таким ID не найден.", "danger")
         else:
-            if form.submit.data:
-                achievements = db_sess.query(Achievement).filter(Achievement.student_id == student.id).all()
-                if not achievements:
-                    flash("У студента нет достижений.", "warning")
-                else:
-                    for a in achievements:
-                        university = db_sess.query(University).filter(University.id == a.university_id).first()
-                        achievements_data.append({
-                            'token': a.token,
-                            'description': a.description,
-                            'university_title': university.title if university else "Неизвестно"
-                        })
-                        return render_template("employer_workspace.html",
-                                               form=form,
-                                               achievements=achievements_data,
-                                               joined_self=session.get('self_name'),
-                                               style=url_for('static', filename='css/style.css'))
-
-            elif form.invite.data:
-                if student.employer_id:
-                    flash("Студент уже приглашён.", "info")
-                else:
-                    if student.employer_id:
-                        student.employer_id += f", {current_user.id}"
-                    else:
-                        student.employer_id = f"{current_user.id}"
-                    db_sess.commit()
-                    flash("Студент успешно приглашён на собеседование.", "success")
+            achievements = db_sess.query(Achievement).filter(Achievement.student_id == student.id).all()
+            if not achievements:
+                flash("У студента нет достижений.", "warning")
+            else:
+                for a in achievements:
+                    university = db_sess.query(University).filter(University.id == a.university_id).first()
+                    achievements_data.append({
+                        'token': a.token,
+                        'description': a.description,
+                        'university_title': university.title if university else "Неизвестно",
+                        'student_id': student.id
+                    })
 
     return render_template("employer_workspace.html",
-                           form=form,
                            achievements=achievements_data,
-                           joined_self=session.get('self_name'),
+                           joined_self=employer.title,
                            style=url_for('static', filename='css/style.css'))
 
 
 @app.route('/invite/<int:student_id>', methods=['POST'])
 @login_required
 def invite_student(student_id):
+    # current_user работает единажды в сессии, так что теперь его невозможно подргузить, привязываем его к сессии на прямую
     db_sess = db_session.create_session()
-    student = db_sess.query(Student).filter(Student.id == student_id).first()
+    user = db_sess.query(User).get(current_user.id)
+    employer = user.employer
 
+    student = db_sess.query(Student).filter(Student.id == student_id).first()
     if not student:
         flash("Невозможно пригласить: студент не найден.")
         return redirect(url_for('employer_workspace'))
 
-    student.employer_id = current_user.id
+    student.employer_id = employer.id
     db_sess.commit()
 
     flash(f"Студент с ID {student_id} приглашён на собеседование.")
@@ -333,10 +292,11 @@ def invite_student(student_id):
 
 
 @app.route('/student_workspace')
+@login_required
 def student_workspace():
     ...
     return render_template('student_workspace.html',
-                           joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
+                           joined_title=current_user.student.student_nsp, style=url_for('static', filename='css/style.css'))
 
 
 def main():

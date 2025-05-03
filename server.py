@@ -1,8 +1,9 @@
 import os
-from flask import Flask, render_template, redirect, url_for, session
-from flask_login import LoginManager, login_user, login_required, logout_user
+from flask import Flask, render_template, redirect, url_for, session, request, flash
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 from data import db_session
+from data.employer_form import StudentSearchForm
 from data.reg_Univer import RegisterUniverForm, choices
 from data.reg_Student import RegisterStudentForm
 from data.reg_Employer import RegisterEmployerForm
@@ -233,11 +234,62 @@ def university_workspace():
                            joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
 
 
-@app.route('/employer_workspace')
+@app.route('/employer_workspace', methods=['GET', 'POST'])
+@login_required
 def employer_workspace():
-    ...
-    return render_template('employer_workspace.html',
-                           joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
+    form = StudentSearchForm()
+    achievements_data = []
+
+    if form.validate_on_submit():
+        student_id = form.student_id.data.strip()
+        db_sess = db_session.create_session()
+        student = db_sess.query(Student).filter(Student.id == student_id).first()
+
+        if not student:
+            flash("Студент с таким ID не найден.", "danger")
+        else:
+            if form.submit.data:
+                achievements = db_sess.query(Achievement).filter(Achievement.student_id == student.id).all()
+                if not achievements:
+                    flash("У студента нет достижений.", "warning")
+                else:
+                    for a in achievements:
+                        university = db_sess.query(University).filter(University.id == a.university_id).first()
+                        achievements_data.append({
+                            'token': a.token,
+                            'description': a.description,
+                            'university_title': university.title if university else "Неизвестно"
+                        })
+
+            elif form.invite.data:
+                if student.employer_id:
+                    flash("Студент уже приглашён.", "info")
+                else:
+                    student.employer_id = current_user.id
+                    db_sess.commit()
+                    flash("Студент успешно приглашён на собеседование.", "success")
+
+    return render_template("employer_workspace.html",
+                           form=form,
+                           achievements=achievements_data,
+                           style=url_for('static', filename='css/style.css'))
+
+
+@app.route('/invite/<int:student_id>', methods=['POST'])
+@login_required
+def invite_student(student_id):
+    db_sess = db_session.create_session()
+    student = db_sess.query(Student).filter(Student.id == student_id).first()
+
+    if not student:
+        flash("Невозможно пригласить: студент не найден.")
+        return redirect(url_for('employer_workspace'))
+
+    student.employer_id = current_user.id
+    db_sess.commit()
+
+    flash(f"Студент с ID {student_id} приглашён на собеседование.")
+    return redirect(url_for('employer_workspace'))
 
 
 @app.route('/student_workspace')

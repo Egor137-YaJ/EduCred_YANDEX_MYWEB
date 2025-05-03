@@ -95,7 +95,12 @@ def register_university():
         )
         db_sess.add(univer)
         db_sess.commit()
-        session['self'] = univer.title
+        ...
+        session['self_name'] = univer.title
+        session['self_id'] = user.university.id
+        session['self'] = user
+        ...
+        load_user(user_id=user.id)
         return redirect('/university_workspace')
     return render_template('register_university.html', title='University Registration',
                            form=form, style=url_for('static', filename='css/style.css'))
@@ -147,7 +152,12 @@ def register_employer():
         )
         db_sess.add(employer)
         db_sess.commit()
-        session['self'] = employer.title
+        ...
+        session['self_name'] = employer.title
+        session['self_id'] = user.employer.id
+        session['self'] = user
+        ...
+        load_user(user_id=user.id)
         return redirect('/employer_workspace')
     return render_template('register_employer.html', title='Employer Registration',
                            form=form, style=url_for('static', filename='css/style.css'))
@@ -198,7 +208,12 @@ def register_student():
         )
         db_sess.add(student)
         db_sess.commit()
-        session['self'] = student.student_nsp
+        ...
+        session['self_id'] = user.student.id
+        session['self_name'] = student.student_nsp
+        session['self'] = user
+        ...
+        load_user(user_id=user.id)
         return redirect('/student_workspace')
     return render_template('register_student.html', title='Student Registration',
                            form=form, style=url_for('static', filename='css/style.css'))
@@ -212,13 +227,28 @@ def login():
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
             if user.role == 'student':
-                session['self'] = user.student.student_nsp
+                ...
+                session['self_name'] = user.student.student_nsp
+                session['self_id'] = user.student.id
+                session['self'] = user
+                ...
+                load_user(user_id=user.id)
                 return redirect("/student_workspace")
             elif user.role == 'university':
-                session['self'] = user.university.title
+                ...
+                session['self_name'] = user.university.title
+                session['self_id'] = user.university.id
+                session['self'] = user
+                ...
+                load_user(user_id=user.id)
                 return redirect("/university_workspace")
             elif user.role == 'employer':
-                session['self'] = user.employer.title
+                ...
+                session['self_name'] = user.employer.title
+                session['self_id'] = user.employer.id
+                session['self'] = user
+                ...
+                load_user(user_id=user.id)
                 return redirect("/employer_workspace")
             return redirect('/home')
         return render_template('login.html', message="Wrong login or password",
@@ -231,7 +261,7 @@ def login():
 def university_workspace():
     ...
     return render_template('university_workspace.html',
-                           joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
+                           joined_title=session.get('self_name'), style=url_for('static', filename='css/style.css'))
 
 
 @app.route('/employer_workspace', methods=['GET', 'POST'])
@@ -239,6 +269,7 @@ def university_workspace():
 def employer_workspace():
     form = StudentSearchForm()
     achievements_data = []
+    print(current_user.email)
 
     if form.validate_on_submit():
         student_id = form.student_id.data.strip()
@@ -260,18 +291,27 @@ def employer_workspace():
                             'description': a.description,
                             'university_title': university.title if university else "Неизвестно"
                         })
+                        return render_template("employer_workspace.html",
+                                               form=form,
+                                               achievements=achievements_data,
+                                               joined_self=session.get('self_name'),
+                                               style=url_for('static', filename='css/style.css'))
 
             elif form.invite.data:
                 if student.employer_id:
                     flash("Студент уже приглашён.", "info")
                 else:
-                    student.employer_id = current_user.id
+                    if student.employer_id:
+                        student.employer_id += f", {current_user.id}"
+                    else:
+                        student.employer_id = f"{current_user.id}"
                     db_sess.commit()
                     flash("Студент успешно приглашён на собеседование.", "success")
 
     return render_template("employer_workspace.html",
                            form=form,
                            achievements=achievements_data,
+                           joined_self=session.get('self_name'),
                            style=url_for('static', filename='css/style.css'))
 
 

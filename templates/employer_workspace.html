@@ -16,8 +16,8 @@
     {% endwith %}
 
     <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Вход выполнен от:<br>{{ joined_self }}.</h3>
         <a href="/employer_lk" class="btn btn-primary">Личный кабинет</a>
-        <a href="/logout" class="btn btn-danger">Выход</a>
     </div>
 
     <form method="post" action="/employer_workspace" class="reg_form">

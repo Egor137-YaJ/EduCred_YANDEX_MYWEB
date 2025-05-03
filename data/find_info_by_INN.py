@@ -23,6 +23,7 @@ group_entity_abbreviations = [
 try:
     f_path = open('abbreviations.json')
     path = 'abbreviations.json'
+    f_path.close()
 except FileNotFoundError:
     path = 'data/abbreviations.json'
 with open(path, encoding='UTF-8') as f:

@@ -6,9 +6,6 @@ from wtforms.validators import DataRequired, Regexp
 class FindStudentForm(FlaskForm):
     student_id = StringField(
         'ID студента',
-        validators=[
-            DataRequired(message="Поле ID студента не может быть пустым"),
-            Regexp(r'^\d+$', message="ID должен состоять только из цифр")
-        ]
+        validators=[DataRequired()]
     )
     submit = SubmitField('Найти')

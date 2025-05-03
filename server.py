@@ -7,6 +7,7 @@ from data.reg_Univer import RegisterUniverForm, choices
 from data.reg_Student import RegisterStudentForm
 from data.reg_Employer import RegisterEmployerForm
 from data.login_form import LoginForm
+from data.find_student_form import FindStudentForm
 from data.Users import User
 from data.Students import Student
 from data.Universities import University
@@ -14,13 +15,11 @@ from data.Employers import Employer
 from data.Achievements import Achievement
 from data.find_info_by_INN import get_info_by_inn
 
-
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "yandexlyceum_secret_key"
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-
 
 ...
 
@@ -56,13 +55,13 @@ def register_university():
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
             return render_template('register_university.html', title='University Registration',
-                                    form=form, style=url_for('static', filename='css/style.css'),
-                                    message="Account with this password already exists")
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
 
         title, address, boss_nsp = get_info_by_inn(form.INN.data)
         type = dict(form.type.choices).get(form.type.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-             return render_template('register_university.html', title='University Registration',
+            return render_template('register_university.html', title='University Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Error in INN request - may be non existing INN")
 
@@ -119,12 +118,12 @@ def register_employer():
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
             return render_template('register_employer.html', title='Employer Registration',
-                                    form=form, style=url_for('static', filename='css/style.css'),
-                                    message="Account with this password already exists")
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
 
         title, address, boss_nsp = get_info_by_inn(form.INN.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-             return render_template('register_employer.html', title='Employer Registration',
+            return render_template('register_employer.html', title='Employer Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Error in INN request - may be non existing INN")
 
@@ -173,11 +172,11 @@ def register_student():
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
             return render_template('register_student.html', title='Student Registration',
-                                    form=form, style=url_for('static', filename='css/style.css'),
-                                    message="Account with this password already exists")
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
 
         if form.born_date.data.year < 1940:
-             return render_template('register_student.html', title='Student Registration',
+            return render_template('register_student.html', title='Student Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Non existing botn date")
 
@@ -226,10 +225,24 @@ def login():
                            form=form, style=url_for('static', filename='css/style.css'))
 
 
-@app.route('/university_workspace')
+@app.route('/university_workspace', methods=['POST', 'GET'])
 def university_workspace():
-    ...
-    return render_template('university_workspace.html',
+    form = FindStudentForm()
+    if form.validate_on_submit():
+        student_id = str(form.student_id.data)
+        if not student_id.isdigit():
+            return render_template('university_workspace.html', form=form, courses=[],
+                                   message='ID должен состоять только из цифр',
+                                   joined_title=session.get('self'),
+                                   style=url_for('static', filename='css/style.css'))
+        student_id = int(student_id)
+        db_sess = db_session.create_session()
+        courses = db_sess.query(Achievement).filter(
+            Achievement.student_id == student_id, Achievement.end_date == None).all()
+        return render_template('university_workspace.html', form=form, courses=courses, message='',
+                               joined_title=session.get('self'),
+                               style=url_for('static', filename='css/style.css'))
+    return render_template('university_workspace.html', form=form, courses=[], message='',
                            joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
 
 
@@ -255,7 +268,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
 # My web: https://precious-fluoridated-muskox.glitch.me/
 # create git with only this directory on git. just files of that github

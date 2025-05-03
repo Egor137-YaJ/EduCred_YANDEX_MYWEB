@@ -1,9 +1,43 @@
 {% extends "workspace_base.html" %}
 
 {% block content %}
-  <div class="container mt-5 p-4 bg-light rounded shadow text-center">
-    <h2 class="text-success mb-3">🎓 Добро пожаловать в рабочее место университета!</h2>
-    <h4 class="text-primary">Вход выполнен от:</h4>
-    <h3 class="text-dark fw-bold">{{ joined_title }}</h3>
-  </div>
+{% if message %}
+<form class="reg_form">
+    <div class="alert alert-danger" role="alert">
+        {{ message }}
+    </div>
+</form>
+{% endif %}
+<form method="POST" class="input-group mb-4">
+    {{ form.hidden_tag() }}
+    {{ form.student_id(class_="form-control", placeholder="ID студента") }}
+    {{ form.submit(class_="btn btn-outline-primary") }}
+</form>
+
+<div class="table-responsive mb-5">
+    <table class="table table-bordered">
+        <caption class="fw-bold">Таблица открытых курсов студента</caption>
+        <thead class="table-light">
+        <tr>
+            <th>Название курса</th>
+            <th>Дата начала</th>
+            <th>Оценка</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for course in courses %}
+        <tr>
+            <td>{{ course.title }}</td>
+            <td>{{ course.start_date.strftime("%d.%m.%Y") }}</td>
+            <td>{{ course.grade or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="3" class="text-center">Курсы не найдены</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 {% endblock %}

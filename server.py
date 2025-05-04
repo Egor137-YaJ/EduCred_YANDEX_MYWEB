@@ -240,18 +240,21 @@ def university_workspace():
 @login_required
 def employer_workspace():
     achievements_data = []
-    # current_user работает единажды в сессии, так что теперь его невозможно подргузить, привязываем его к сессии на прямую
+    student_id = ""
+    student_fullname = None
+
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     employer = user.employer
 
-    if request.method == 'POST':
+    if request.method == 'POST' and request.args.get('clear') != 'true':
         student_id = request.form.get('student_id', '').strip()
         student = db_sess.query(Student).filter(Student.id == student_id).first()
 
         if not student:
             flash("Студент с таким ID не найден.", "danger")
         else:
+            student_fullname = f"{student.student_nsp}".strip()
             achievements = db_sess.query(Achievement).filter(Achievement.student_id == student.id).all()
             if not achievements:
                 flash("У студента нет достижений.", "warning")
@@ -260,14 +263,17 @@ def employer_workspace():
                     university = db_sess.query(University).filter(University.id == a.university_id).first()
                     achievements_data.append({
                         'token': a.token,
-                        'description': a.description,
-                        'university_title': university.title if university else "Неизвестно",
-                        'student_id': student.id
+                        'description': a.title,
+                        'university_title': university.title if university else "",
+                        'student_id': student.id,
+                        'file_path': a.file_path
                     })
 
     return render_template("employer_workspace.html",
                            achievements=achievements_data,
                            joined_self=employer.title,
+                           entered_id=student_id,
+                           student_fullname=student_fullname,
                            style=url_for('static', filename='css/style.css'))
 
 
@@ -284,11 +290,17 @@ def invite_student(student_id):
         flash("Невозможно пригласить: студент не найден.")
         return redirect(url_for('employer_workspace'))
 
-    student.employer_id = employer.id
+    student.employer_id = employer.id if not student.employer_id else ', '.join(set(student.employer_id.split()))
     db_sess.commit()
 
     flash(f"Студент с ID {student_id} приглашён на собеседование.")
     return redirect(url_for('employer_workspace'))
+
+
+@app.route('/empl_clear', methods=["POST"])
+@login_required
+def employer_clear():
+    return redirect(url_for('employer_workspace', clear='true'))
 
 
 @app.route('/student_workspace')

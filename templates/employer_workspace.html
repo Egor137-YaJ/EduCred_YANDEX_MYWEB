@@ -17,16 +17,33 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3>Вход выполнен от:<br>{{ joined_self }}.</h3>
-        <a href="/employer_lk" class="btn btn-primary">Личный кабинет</a>
+        <a href="/profile" class="btn btn-primary">Личный кабинет</a>
     </div>
 
-    <form method="post" action="/employer_workspace" class="reg_form">
-        <label for="student_id">ID студента:</label>
-        <input type="text" id="student_id" name="student_id" required>
-        <button type="submit" class="btn btn-success">Готово</button>
-    </form>
+    <div class="student_search_block">
+        <form method="post" action="/employer_workspace" class="student_search_form">
+            <label for="student_id">ID студента:</label>
+            <input type="text" id="student_id" name="student_id" value="{{ entered_id }}" required>
+            <button type="submit" class="btn btn-success">Готово</button>
+        </form>
+
+        <form method="post" action="/empl_clear" class="btn_form">
+            <button type="submit" class="btn btn-danger">Стереть</button>
+        </form>
+</div>
 
     {% if achievements %}
+
+    <div class="d-flex justify-content-between align-items-center mt-4 student-found-box">
+        <div class="student-name">
+            Найден студент: <strong>{{ student_fullname }}</strong>
+        </div>
+
+        <form method="post" action="/invite/{{ achievements[0].student_id }}" class="invite-form m-0">
+            <button type="submit" class="btn btn-outline-info">Пригласить</button>
+        </form>
+    </div>
+
     <div class="table-box">
         <table class="table table-striped">
             <thead>
@@ -34,7 +51,7 @@
                     <th>Токен</th>
                     <th>Название достижения</th>
                     <th>Учебное заведение</th>
-                    <th>Приглашение</th>
+                    <th>Файл</th>
                 </tr>
             </thead>
             <tbody>
@@ -44,9 +61,14 @@
                     <td>{{ ach.description }}</td>
                     <td>{{ ach.university_title }}</td>
                     <td>
-                        <form method="post" action="/invite/{{ ach.student_id }}">
-                            <button type="submit" class="btn btn-outline-info btn-sm">Пригласить</button>
-                        </form>
+                        {% if ach.university_title != "" %}
+                            <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Открыть PDF</a>
+                        {% else %}
+                            <audio controls>
+                                <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                                Ваш браузер не поддерживает аудио.
+                            </audio>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

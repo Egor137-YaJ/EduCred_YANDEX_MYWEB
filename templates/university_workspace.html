@@ -13,7 +13,11 @@
     {{ form.student_id(class_="form-control", placeholder="ID студента") }}
     {{ form.submit(class_="btn btn-outline-primary") }}
 </form>
-
+{% if student %}
+<div class="alert alert-info" role="alert">
+    <strong>Студент:</strong> {{ student.student_nsp }}
+</div>
+{% endif %}
 <div class="table-responsive mb-5">
     <table class="table table-bordered">
         <caption class="fw-bold">Таблица открытых курсов студента</caption>
@@ -32,9 +36,15 @@
             <td>{{ course.grade or '—' }}</td>
         </tr>
         {% else %}
+        {% if student %}
         <tr>
             <td colspan="3" class="text-center">Курсы не найдены</td>
         </tr>
+        {% else %}
+        <tr>
+            <td colspan="3" class="text-center">Введите ID студена для поиска</td>
+        </tr>
+        {% endif %}
         {% endfor %}
         </tbody>
     </table>

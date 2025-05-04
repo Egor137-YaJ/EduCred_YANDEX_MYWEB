@@ -233,16 +233,18 @@ def university_workspace():
         if not student_id.isdigit():
             return render_template('university_workspace.html', form=form, courses=[],
                                    message='ID должен состоять только из цифр',
-                                   joined_title=session.get('self'),
+                                   joined_title=session.get('self'), student='',
                                    style=url_for('static', filename='css/style.css'))
         student_id = int(student_id)
         db_sess = db_session.create_session()
         courses = db_sess.query(Achievement).filter(
             Achievement.student_id == student_id, Achievement.end_date == None).all()
+        student = db_sess.query(Student).filter(Student.id == student_id).first()
         return render_template('university_workspace.html', form=form, courses=courses, message='',
+                               student=student,
                                joined_title=session.get('self'),
                                style=url_for('static', filename='css/style.css'))
-    return render_template('university_workspace.html', form=form, courses=[], message='',
+    return render_template('university_workspace.html', form=form, courses=[], message='', student='',
                            joined_title=session.get('self'), style=url_for('static', filename='css/style.css'))
 
 

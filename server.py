@@ -290,7 +290,8 @@ def invite_student(student_id):
         flash("Невозможно пригласить: студент не найден.")
         return redirect(url_for('employer_workspace'))
 
-    student.employer_id = employer.id if not student.employer_id else ', '.join(set(student.employer_id.split()))
+    student.employer_id = str(employer.id) if not student.employer_id else\
+        ";".join(set(student.employer_id.split(";") + [str(employer.id)]))
     db_sess.commit()
 
     flash(f"Студент с ID {student_id} приглашён на собеседование.")

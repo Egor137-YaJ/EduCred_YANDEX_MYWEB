@@ -5,7 +5,11 @@ from wtforms.validators import DataRequired, Regexp
 
 
 class RegisterStudentForm(FlaskForm):
-    NSP = StringField('ФИО(через пробел)', validators=[DataRequired()])
+    NSP = StringField('ФИО (через пробел)', validators=[
+        DataRequired(),
+        Regexp(r'^[А-ЯЁа-яёA-Za-z]+\s+[А-ЯЁа-яёA-Za-z]+\s+[А-ЯЁа-яёA-Za-z]+$',
+               message='Введите корректное ФИО: фамилия, имя и отчество через пробел')
+        ])
     born_date = DateField('Дата рождения', validators=[DataRequired()])
     phone_number = StringField('Номер телефона',
                         validators=[

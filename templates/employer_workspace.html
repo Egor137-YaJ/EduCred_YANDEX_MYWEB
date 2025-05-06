@@ -15,28 +15,25 @@
 
     <div class="student_search_block">
         <form method="post" class="student_search_form">
-            {{ form.hidden_tag() }}
-            {{ form.student_id.label }}
-            {{ form.student_id(class="form-control") }}
-            <button type="submit" class="btn btn-success btn-equal-height">Готово</button>
-        </form>
-
-        <form method="post" action="{{ url_for('employer_clear') }}" class="btn_form">
-            <button type="submit" class="btn btn-danger btn-equal-height">Стереть</button>
+            <p>{{ form.hidden_tag() }}</p>
+            <p>{{ form.student_id.label }}</p>
+            <p>{{ form.student_id(class="form-control") }}</p>
+            <p>{{ form.submit(type="submit", class="btn btn-success btn-equal-height") }}</p>
+            <p>{{ form.clear(type="submit", class="btn btn-danger btn-equal-height") }}</p>
+            {% if achievements %}
+                <p>{{ form.invite(type="submit", class="btn btn-outline-info") }}</p>
+            {% endif %}
         </form>
     </div>
-
-    {% if achievements %}
+    {% if student_fullname %}
         <div class="d-flex justify-content-between align-items-center mt-4 student-found-box">
             <div class="student-name">
-                Найден студент: <strong>{{ student_fullname }}</strong>
+                        Найден студент: <strong>{{ student_fullname }}</strong>
             </div>
-
-            <form method="post" action="{{ url_for('invite_student', student_id=achievements[0].student_id) }}" class="invite-form m-0">
-                <button type="submit" class="btn btn-outline-info">Пригласить</button>
-            </form>
         </div>
+    {% endif %}
 
+    {% if achievements %}
         <div class="table-box">
             <table class="table table-striped">
                 <thead>

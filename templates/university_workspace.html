@@ -8,7 +8,7 @@
     </div>
 </form>
 {% endif %}
-<form method="POST" class="input-group mb-4">
+<form method="POST" class="d-flex gap-2 mb-4 align-items-center">
     {{ form.hidden_tag() }}
     {{ form.student_id(class_="form-control", placeholder="ID студента") }}
     {{ form.submit(class_="btn btn-outline-primary") }}
@@ -19,8 +19,8 @@
 </div>
 {% endif %}
 <div class="table-responsive mb-5">
+    <caption class="fw-bold">Таблица открытых курсов студента</caption>
     <table class="table table-bordered">
-        <caption class="fw-bold">Таблица открытых курсов студента</caption>
         <thead class="table-light">
         <tr>
             <th>Название курса</th>

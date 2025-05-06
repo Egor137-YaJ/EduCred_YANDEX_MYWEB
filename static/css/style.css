@@ -1,6 +1,6 @@
 .student_search_block {
     display: flex;
-    align-items: flex-end;
+    align-items: center; /* Было flex-end, делаем по центру */
     gap: 10px;
     max-width: 900px;
     margin: 20px auto;
@@ -8,15 +8,17 @@
 
 .student_search_form {
     display: flex;
-    align-items: flex-end;
-    gap: 10px;
+    align-items: center;
     flex-grow: 1;
+    gap: 10px;
 }
 
 .student_search_form input {
     font-size: 18px;
     padding: 8px;
+    height: 38px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 form.reg_form {
@@ -45,6 +47,8 @@ form.reg_form textarea {
 
 form.btn_form {
     margin: 0;
+    display: flex;
+    align-items: center;
 }
 
 .btn {
@@ -59,6 +63,16 @@ form.btn_form {
     text-decoration: none;
     cursor: pointer;
     border-radius: 4px;
+}
+
+.btn-equal-height {
+    height: 38px;
+    padding: 0 14px;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn:hover {
@@ -128,4 +142,12 @@ form.invite-form.m-0 {
 .student-name {
     font-size: 18px;
     font-weight: 500;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.gap-2 {
+    gap: 10px;
 }

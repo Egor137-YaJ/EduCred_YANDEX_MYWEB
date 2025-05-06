@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
-class StudentSearchForm(FlaskForm):
+class EmplStudentSearchForm(FlaskForm):
     student_id = StringField("ID студента", validators=[
         DataRequired()])
     submit = SubmitField("Готово")

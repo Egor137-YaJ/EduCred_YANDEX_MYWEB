@@ -1,8 +1,6 @@
-{% extends "base.html" %}
-
+{% extends "workspace_base.html" %}
 
 {% block content %}
-
 <div class="container">
 
     {% with messages = get_flashed_messages() %}
@@ -15,68 +13,62 @@
         {% endif %}
     {% endwith %}
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>Вход выполнен от:<br>{{ joined_self }}.</h3>
-        <a href="/profile" class="btn btn-primary">Личный кабинет</a>
-    </div>
-
     <div class="student_search_block">
-        <form method="post" action="/employer_workspace" class="student_search_form">
-            <label for="student_id">ID студента:</label>
-            <input type="text" id="student_id" name="student_id" value="{{ entered_id }}" required>
-            <button type="submit" class="btn btn-success">Готово</button>
+        <form method="post" class="student_search_form">
+            {{ form.hidden_tag() }}
+            {{ form.student_id.label }}
+            {{ form.student_id(class="form-control") }}
+            <button type="submit" class="btn btn-success btn-equal-height">Готово</button>
         </form>
 
-        <form method="post" action="/empl_clear" class="btn_form">
-            <button type="submit" class="btn btn-danger">Стереть</button>
+        <form method="post" action="{{ url_for('employer_clear') }}" class="btn_form">
+            <button type="submit" class="btn btn-danger btn-equal-height">Стереть</button>
         </form>
-</div>
+    </div>
 
     {% if achievements %}
+        <div class="d-flex justify-content-between align-items-center mt-4 student-found-box">
+            <div class="student-name">
+                Найден студент: <strong>{{ student_fullname }}</strong>
+            </div>
 
-    <div class="d-flex justify-content-between align-items-center mt-4 student-found-box">
-        <div class="student-name">
-            Найден студент: <strong>{{ student_fullname }}</strong>
+            <form method="post" action="{{ url_for('invite_student', student_id=achievements[0].student_id) }}" class="invite-form m-0">
+                <button type="submit" class="btn btn-outline-info">Пригласить</button>
+            </form>
         </div>
 
-        <form method="post" action="/invite/{{ achievements[0].student_id }}" class="invite-form m-0">
-            <button type="submit" class="btn btn-outline-info">Пригласить</button>
-        </form>
-    </div>
-
-    <div class="table-box">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Токен</th>
-                    <th>Название достижения</th>
-                    <th>Учебное заведение</th>
-                    <th>Файл</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ach in achievements %}
-                <tr>
-                    <td>{{ ach.token }}</td>
-                    <td>{{ ach.description }}</td>
-                    <td>{{ ach.university_title }}</td>
-                    <td>
-                        {% if ach.university_title != "" %}
-                            <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Открыть PDF</a>
-                        {% else %}
-                            <audio controls>
-                                <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                                Ваш браузер не поддерживает аудио.
-                            </audio>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <div class="table-box">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Токен</th>
+                        <th>Название достижения</th>
+                        <th>Учебное заведение</th>
+                        <th>Файл</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ach in achievements %}
+                    <tr>
+                        <td>{{ ach.token }}</td>
+                        <td>{{ ach.description }}</td>
+                        <td>{{ ach.university_title }}</td>
+                        <td>
+                            {% if ach.university_title %}
+                                <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Открыть PDF</a>
+                            {% else %}
+                                <audio controls>
+                                    <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                                    Ваш браузер не поддерживает аудио.
+                                </audio>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 
 </div>
-
 {% endblock %}

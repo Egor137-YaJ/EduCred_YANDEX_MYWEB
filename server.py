@@ -1,9 +1,10 @@
 import os
-from flask import Flask, render_template, redirect, url_for, session, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 from data import db_session
-from data.employer_form import StudentSearchForm
+from data.employer_find_student_form import EmplStudentSearchForm
+from data.univer_find_student_form import UniverFindStudentForm
 from data.reg_Univer import RegisterUniverForm, choices
 from data.reg_Student import RegisterStudentForm
 from data.reg_Employer import RegisterEmployerForm
@@ -228,34 +229,54 @@ def login():
                            form=form, style=url_for('static', filename='css/style.css'))
 
 
-@app.route('/university_workspace')
+@app.route('/university_workspace', methods=['POST', 'GET'])
 @login_required
 def university_workspace():
-    ...
-    return render_template('university_workspace.html',
-                           joined_title=current_user.university.title, style=url_for('static', filename='css/style.css'))
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).get(current_user.id)
+    univer = user.university
+    form = UniverFindStudentForm()
+    if form.validate_on_submit():
+        student_id = str(form.student_id.data)
+        if not student_id.isdigit():
+            return render_template('university_workspace.html', form=form, courses=[],
+                                   message='ID должен состоять только из цифр',
+                                   joined_title=univer.title, student='',
+                                   style=url_for('static', filename='css/style.css'))
+        student_id = int(student_id)
+        db_sess = db_session.create_session()
+        courses = db_sess.query(Achievement).filter(
+            Achievement.student_id == student_id, Achievement.end_date == None).all()
+        student = db_sess.query(Student).filter(Student.id == student_id).first()
+        return render_template('university_workspace.html', form=form, courses=courses, message='',
+                               student=student,
+                               joined_title=univer.title,
+                               style=url_for('static', filename='css/style.css'))
+    return render_template('university_workspace.html', form=form, courses=[], message='', student='',
+                           joined_title=univer.title, style=url_for('static', filename='css/style.css'))
 
 
 @app.route('/employer_workspace', methods=['GET', 'POST'])
 @login_required
 def employer_workspace():
     achievements_data = []
-    student_id = ""
     student_fullname = None
+    form = EmplStudentSearchForm()
 
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     employer = user.employer
 
-    if request.method == 'POST' and request.args.get('clear') != 'true':
-        student_id = request.form.get('student_id', '').strip()
+    if form.validate_on_submit() and not form.clear.data:
+        student_id = form.student_id.data.strip()
         student = db_sess.query(Student).filter(Student.id == student_id).first()
 
         if not student:
             flash("Студент с таким ID не найден.", "danger")
         else:
-            student_fullname = f"{student.student_nsp}".strip()
-            achievements = db_sess.query(Achievement).filter(Achievement.student_id == student.id).all()
+            student_fullname = student.student_nsp.strip()
+            achievements = db_sess.query(Achievement).filter(Achievement.student_id == student.id, Achievement.end_date != None).all()
+
             if not achievements:
                 flash("У студента нет достижений.", "warning")
             else:
@@ -270,9 +291,10 @@ def employer_workspace():
                     })
 
     return render_template("employer_workspace.html",
+                           form=form,
                            achievements=achievements_data,
-                           joined_self=employer.title,
-                           entered_id=student_id,
+                           joined_title=employer.title,
+                           entered_id=form.student_id.data if form.student_id.data else "",
                            student_fullname=student_fullname,
                            style=url_for('static', filename='css/style.css'))
 
@@ -280,7 +302,6 @@ def employer_workspace():
 @app.route('/invite/<int:student_id>', methods=['POST'])
 @login_required
 def invite_student(student_id):
-    # current_user работает единажды в сессии, так что теперь его невозможно подргузить, привязываем его к сессии на прямую
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     employer = user.employer
@@ -290,10 +311,14 @@ def invite_student(student_id):
         flash("Невозможно пригласить: студент не найден.")
         return redirect(url_for('employer_workspace'))
 
-    student.employer_id = str(employer.id) if not student.employer_id else\
-        ";".join(set(student.employer_id.split(";") + [str(employer.id)]))
-    db_sess.commit()
+    if not student.employer_id:
+        student.employer_id = str(employer.id)
+    else:
+        ids = set(student.employer_id.split(";"))
+        ids.add(str(employer.id))
+        student.employer_id = ";".join(ids)
 
+    db_sess.commit()
     flash(f"Студент с ID {student_id} приглашён на собеседование.")
     return redirect(url_for('employer_workspace'))
 
@@ -301,7 +326,7 @@ def invite_student(student_id):
 @app.route('/empl_clear', methods=["POST"])
 @login_required
 def employer_clear():
-    return redirect(url_for('employer_workspace', clear='true'))
+    return redirect(url_for('employer_workspace'))
 
 
 @app.route('/student_workspace')

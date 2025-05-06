@@ -1,5 +1,6 @@
 import json
 import requests
+from .config import dadata_token
 
 
 group_entity_abbreviations = [
@@ -41,7 +42,7 @@ def change_if_full_comp(boss):
 
 def get_info_by_inn(inn):
     url = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party"
-    token = "d7a26c02b1fcfcc8aae5223ef09ae3737377dccb"
+    token = dadata_token
     headers = {
         "Authorization": f"Token {token}",
         "Content-Type": "application/json",
@@ -58,12 +59,12 @@ def get_info_by_inn(inn):
             suggestion = result['suggestions'][0]
             title = suggestion['value']
             address = suggestion['data']['address']['value']
-            print(suggestion)
             boss_nsp = suggestion['data']['management']['name'] if suggestion['data'].get(
                 'management') else suggestion['data']['name']['full']
             boss_nsp = change_if_full_comp(boss_nsp) if suggestion['data']['opf']['short'] in group_entity_abbreviations else boss_nsp
+            check = suggestion['data']['name']['full_with_opf']
 
-            return title, address, boss_nsp
+            return title, address, boss_nsp, check
         else:
             return "Не найдено", "Не найдено", "Не найдено"
 

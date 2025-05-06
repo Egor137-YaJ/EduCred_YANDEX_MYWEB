@@ -15,10 +15,11 @@ from data.Universities import University
 from data.Employers import Employer
 from data.Achievements import Achievement
 from data.find_info_by_INN import get_info_by_inn
+from data.config import secret_token
 
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "yandexlyceum_secret_key"
+app.config["SECRET_KEY"] = secret_token
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -62,7 +63,7 @@ def register_university():
                                     form=form, style=url_for('static', filename='css/style.css'),
                                     message="Account with this password already exists")
 
-        title, address, boss_nsp = get_info_by_inn(form.INN.data)
+        title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
         type = dict(form.type.choices).get(form.type.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
              return render_template('register_university.html', title='University Registration',
@@ -70,7 +71,7 @@ def register_university():
                                    message="Error in INN request - may be non existing INN")
 
         if type.lower() not in ['онлайн-курс', 'другое']:
-            if type.lower() not in title.lower():
+            if type.lower() not in check.lower():
                 return render_template('register_university.html', title='University Registration',
                                        form=form, style=url_for('static', filename='css/style.css'),
                                        message="Types doesn't match")
@@ -86,7 +87,10 @@ def register_university():
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
-        title = title.split(';')[1] if ';' in title else title.split(', ')[1]
+        if ';' in title:
+            title = title.split(';')[1]
+        elif ',' in title:
+            title = title.split(', ')[1]
         univer = University(
             user_id=user.id,
             INN=form.INN.data,
@@ -125,7 +129,7 @@ def register_employer():
                                     form=form, style=url_for('static', filename='css/style.css'),
                                     message="Account with this password already exists")
 
-        title, address, boss_nsp = get_info_by_inn(form.INN.data)
+        title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
              return render_template('register_employer.html', title='Employer Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),

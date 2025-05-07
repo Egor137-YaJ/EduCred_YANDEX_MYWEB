@@ -17,13 +17,11 @@ from data.Achievements import Achievement
 from data.find_info_by_INN import get_info_by_inn
 from data.config import secret_token
 
-
 app = Flask(__name__)
 app.config["SECRET_KEY"] = secret_token
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-
 
 ...
 
@@ -60,13 +58,13 @@ def register_university():
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
             return render_template('register_university.html', title='University Registration',
-                                    form=form, style=url_for('static', filename='css/style.css'),
-                                    message="Account with this password already exists")
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
 
         title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
         type = dict(form.type.choices).get(form.type.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-             return render_template('register_university.html', title='University Registration',
+            return render_template('register_university.html', title='University Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Error in INN request - may be non existing INN")
 
@@ -126,12 +124,12 @@ def register_employer():
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
             return render_template('register_employer.html', title='Employer Registration',
-                                    form=form, style=url_for('static', filename='css/style.css'),
-                                    message="Account with this password already exists")
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
 
         title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-             return render_template('register_employer.html', title='Employer Registration',
+            return render_template('register_employer.html', title='Employer Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Error in INN request - may be non existing INN")
 
@@ -180,11 +178,11 @@ def register_student():
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
             return render_template('register_student.html', title='Student Registration',
-                                    form=form, style=url_for('static', filename='css/style.css'),
-                                    message="Account with this password already exists")
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
 
         if form.born_date.data.year < 1940:
-             return render_template('register_student.html', title='Student Registration',
+            return render_template('register_student.html', title='Student Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Non existing botn date")
 
@@ -331,9 +329,32 @@ def employer_workspace():
 @app.route('/student_workspace')
 @login_required
 def student_workspace():
-    ...
+    achievements_data = []
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).get(current_user.id)
+    student = user.student
+    student_fullname = student.student_nsp.strip()
+    achievements = db_sess.query(Achievement).filter(
+        Achievement.student_id == student.id,
+        Achievement.end_date != None).all()
+
+    if not achievements:
+        flash("У студента нет достижений.", "warning")
+    else:
+        for a in achievements:
+            university = db_sess.query(University).filter(University.id == a.university_id).first()
+            achievements_data.append({
+                'token': a.token,
+                'description': a.title,
+                'university_title': university.title if university else "",
+                'student_id': student.id,
+                'file_path': a.file_path
+            })
+        session['student_id_current'] = student.id
+
     return render_template('student_workspace.html',
-                           joined_title=current_user.student.student_nsp, style=url_for('static', filename='css/style.css'))
+                           joined_title=student_fullname,
+                           style=url_for('static', filename='css/style.css'), achievements=achievements_data)
 
 
 def main():
@@ -344,7 +365,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
 # My web: https://precious-fluoridated-muskox.glitch.me/
 # create git with only this directory on git. just files of that github

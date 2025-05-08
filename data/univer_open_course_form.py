@@ -8,5 +8,5 @@ class UniverOpenCourseForm(FlaskForm):
         'ID студента',
         validators=[DataRequired()]
     )
-    title_course = StringField("Название курса:", validators=[DataRequired()])
-    submit = SubmitField('Открыть курс')
+    course_title = StringField("Название курса:", validators=[DataRequired()])
+    open_submit = SubmitField('Открыть курс')

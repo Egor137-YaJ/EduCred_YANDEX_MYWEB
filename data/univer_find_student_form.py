@@ -8,4 +8,4 @@ class UniverFindStudentForm(FlaskForm):
         'ID студента',
         validators=[DataRequired()]
     )
-    submit = SubmitField('Найти')
+    find_submit = SubmitField('Найти')

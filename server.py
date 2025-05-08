@@ -1,3 +1,4 @@
+import datetime
 import os
 from flask import Flask, render_template, redirect, url_for, session, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -5,6 +6,8 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from data import db_session
 from data.employer_find_student_form import EmplStudentSearchForm
 from data.univer_find_student_form import UniverFindStudentForm
+from data.univer_open_course_form import UniverOpenCourseForm
+from data.univer_finish_course_form import UniverCloseCourseForm
 from data.reg_Univer import RegisterUniverForm, choices
 from data.reg_Student import RegisterStudentForm
 from data.reg_Employer import RegisterEmployerForm
@@ -239,25 +242,58 @@ def university_workspace():
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     univer = user.university
-    form = UniverFindStudentForm()
-    if form.validate_on_submit():
-        student_id = str(form.student_id.data)
+    form_find = UniverFindStudentForm()
+    form_open = UniverOpenCourseForm()
+    form_close = UniverCloseCourseForm()
+    courses = []
+    student_found_table = ''
+    student_close = ''
+
+    if form_find.validate_on_submit():
+        if form_find.find_submit.data:
+            student_id = str(form_find.student_id.data)
+            if not student_id.isdigit():
+                flash('ID студента, которого вы хотите найти, должен состоять только из цифр')
+            student_id = int(student_id)
+            db_sess = db_session.create_session()
+            courses = db_sess.query(Achievement).filter(
+                Achievement.student_id == student_id, Achievement.end_date == None).all()
+            student_found_table = db_sess.query(Student).filter(Student.id == student_id).first()
+
+    if form_open.validate_on_submit():
+        if form_open.open_submit.data:
+            ...
+
+    if form_close.validate_on_submit():
+        if form_close.close_submit.data:
+            student_id = str(form_close.student_id.data)
         if not student_id.isdigit():
-            return render_template('university_workspace.html', form=form, courses=[],
-                                   message='ID должен состоять только из цифр',
-                                   joined_title=univer.title, student='',
-                                   style=url_for('static', filename='css/style.css'))
+            flash('ID студента, которому вы хотите завершить курс, должен состоять только из цифр')
         student_id = int(student_id)
+        student_close = db_sess.query(Student).get(student_id)
+
+        got_title = str(form_close.course_title.data)
         db_sess = db_session.create_session()
-        courses = db_sess.query(Achievement).filter(
-            Achievement.student_id == student_id, Achievement.end_date == None).all()
-        student = db_sess.query(Student).filter(Student.id == student_id).first()
-        return render_template('university_workspace.html', form=form, courses=courses, message='',
-                               student=student,
-                               joined_title=univer.title,
-                               style=url_for('static', filename='css/style.css'))
-    return render_template('university_workspace.html', form=form, courses=[], message='', student='',
-                           joined_title=univer.title, style=url_for('static', filename='css/style.css'))
+        found_course = db_sess.query(Achievement).filter(
+            Achievement.title == got_title,
+            Achievement.end_date == None,
+            Achievement.university_id == univer.id,
+            Achievement.student_id == student_id
+        ).first()
+        if found_course:
+            found_course.end_date = datetime.datetime.now()
+            db_sess.commit()
+            flash("Курс закрыт успешно, поздравляем!")
+        else:
+            flash("Неверные данные для закрытия курса")
+    ...
+    return render_template('university_workspace.html',
+                           form_find=form_find, form_close=form_close, form_open=form_open,
+                           student_find=student_found_table,
+                           student_close=student_close,
+                           courses=courses,
+                           joined_title=univer.title,
+                           style=url_for('static', filename='css/style.css'))
 
 
 @app.route('/employer_workspace', methods=['GET', 'POST'])

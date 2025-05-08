@@ -1,53 +1,92 @@
 {% extends "workspace_base.html" %}
 
 {% block content %}
-{% if message %}
-<form class="reg_form">
-    <div class="alert alert-danger" role="alert">
-        {{ message }}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="d-flex gap-2 mb-4 align-items-center">
+        {{ form_find.hidden_tag() }}
+        {{ form_find.student_id(class_="form-control", id="find_student_id", placeholder="ID студента") }}
+        {{ form_find.find_submit(class_="btn btn-outline-primary") }}
+    </form>
+
+    {% if student %}
+        <div class="alert alert-info" role="alert">
+            <strong>Студент:</strong> {{ student_find.student_nsp }}
+        </div>
+    {% endif %}
+
+    <div class="table-responsive mb-5">
+        <caption class="fw-bold">Таблица открытых курсов студента</caption>
+        <table class="table table-bordered">
+            <thead class="table-light">
+            <tr>
+                <th>Название курса</th>
+                <th>Дата начала</th>
+                <th>Оценка</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for course in courses %}
+            <tr>
+                <td>{{ course.title }}</td>
+                <td>{{ course.start_date.strftime("%d.%m.%Y") }}</td>
+                <td>{{ course.grade or '—' }}</td>
+            </tr>
+            {% else %}
+            {% if student_find %}
+            <tr>
+                <td colspan="3" class="text-center">Курсы не найдены</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" class="text-center">Введите ID студена для поиска</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
-</form>
-{% endif %}
-<form method="POST" class="d-flex gap-2 mb-4 align-items-center">
-    {{ form.hidden_tag() }}
-    {{ form.student_id(class_="form-control", placeholder="ID студента") }}
-    {{ form.submit(class_="btn btn-outline-primary") }}
-</form>
-{% if student %}
-<div class="alert alert-info" role="alert">
-    <strong>Студент:</strong> {{ student.student_nsp }}
-</div>
-{% endif %}
-<div class="table-responsive mb-5">
-    <caption class="fw-bold">Таблица открытых курсов студента</caption>
-    <table class="table table-bordered">
-        <thead class="table-light">
-        <tr>
-            <th>Название курса</th>
-            <th>Дата начала</th>
-            <th>Оценка</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for course in courses %}
-        <tr>
-            <td>{{ course.title }}</td>
-            <td>{{ course.start_date.strftime("%d.%m.%Y") }}</td>
-            <td>{{ course.grade or '—' }}</td>
-        </tr>
-        {% else %}
-        {% if student %}
-        <tr>
-            <td colspan="3" class="text-center">Курсы не найдены</td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="3" class="text-center">Введите ID студена для поиска</td>
-        </tr>
-        {% endif %}
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
+
+    <form method="POST" id="open-course-form" class="mb-4">
+        {{ form_open.hidden_tag() }}
+
+        <div class="mb-3">
+            {{ form_open.student_id.label }}
+            {{ form_open.student_id(class="form-control", id="student_id") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form_open.course_title.label }}
+            {{ form_open.course_title(class="form-control", id="course_title") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form_open.open_submit(class="btn btn-primary") }}
+        </div>
+    </form>
+
+    <form method="POST" id="close-course-form" class="mb-4">
+        {{ form_close.hidden_tag() }}
+
+        <div class="mb-3">
+            {{ form_close.student_id.label }}
+            {{ form_close.student_id(class="form-control", id="close_student_id") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form_close.course_title.label }}
+            {{ form_close.course_title(class="form-control", id="close_course_title") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form_close.close_submit(class="btn btn-primary") }}
+        </div>
+    </form>
 
 {% endblock %}

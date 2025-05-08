@@ -11,6 +11,7 @@ from data.reg_Employer import RegisterEmployerForm
 from data.login_form import LoginForm
 from data.Users import User
 from data.Students import Student
+from data.upload_music_form import UploadMusicForm
 from data.Universities import University
 from data.Employers import Employer
 from data.Achievements import Achievement
@@ -326,17 +327,31 @@ def employer_workspace():
                            style=url_for('static', filename='css/style.css'))
 
 
-@app.route('/student_workspace')
+@app.route('/student_workspace', methods=['GET', 'POST'])
 @login_required
 def student_workspace():
     achievements_data = []
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     student = user.student
+    form = UploadMusicForm()
+    if form.validate_on_submit():
+        ach = form.audio.data
+        # token, path = upload_tokened_ach(ach)
+        ach.save(os.path.join('static/achievements', f'{form.name.data}.mp3'))
+        achievement = Achievement(
+            # token = token,
+            # file_path = path,
+            file_path=f'achievements/{form.name.data}.mp3',
+            title=form.name.data,
+            student_id=student.id)
+        db_sess.add(achievement)
+        db_sess.commit()
+        return redirect(url_for('student_workspace'))
+
     student_fullname = student.student_nsp.strip()
     achievements = db_sess.query(Achievement).filter(
-        Achievement.student_id == student.id,
-        Achievement.end_date != None).all()
+        Achievement.student_id == student.id).all()
 
     if not achievements:
         flash("У студента нет достижений.", "warning")
@@ -351,21 +366,20 @@ def student_workspace():
                 'file_path': a.file_path
             })
         session['student_id_current'] = student.id
-
     return render_template('student_workspace.html',
+                           form=form,
                            joined_title=student_fullname,
-                           style=url_for('static', filename='css/style.css'), achievements=achievements_data)
-
+                           achievements=achievements_data,
+                           style=url_for('static', filename='css/style.css'))
 
 def main():
     db_session.global_init("db/EduCred_data.db")
     port = int(os.environ.get("PORT", 8000))
     app.run(host='0.0.0.0', port=port)
 
-
 if __name__ == '__main__':
     main()
 
-# My web: https://precious-fluoridated-muskox.glitch.me/
-# create git with only this directory on git. just files of that github
-# My Projects: https://glitch.com/dashboard?group=owned&sortColumn=boost&sortDirection=DESC&page=1&showAll=false&filterDomain=
+    # My web: https://precious-fluoridated-muskox.glitch.me/
+    # create git with only this directory on git. just files of that github
+    # My Projects: https://glitch.com/dashboard?group=owned&sortColumn=boost&sortDirection=DESC&page=1&showAll=false&filterDomain=

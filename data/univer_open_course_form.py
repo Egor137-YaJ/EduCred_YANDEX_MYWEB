@@ -4,9 +4,9 @@ from wtforms.validators import DataRequired
 
 
 class UniverOpenCourseForm(FlaskForm):
-    student_id = StringField(
+    open_student_id = StringField(
         'ID студента',
         validators=[DataRequired()]
     )
-    course_title = StringField("Название курса:", validators=[DataRequired()])
+    open_course_title = StringField("Название курса:", validators=[DataRequired()])
     open_submit = SubmitField('Открыть курс')

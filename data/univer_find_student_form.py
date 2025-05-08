@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired, Regexp
 
 
 class UniverFindStudentForm(FlaskForm):
-    student_id = StringField(
+    find_student_id = StringField(
         'ID студента',
         validators=[DataRequired()]
     )

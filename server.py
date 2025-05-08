@@ -2,6 +2,7 @@ import datetime
 import os
 from flask import Flask, render_template, redirect, url_for, session, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from sqlalchemy import or_
 
 from data import db_session
 from data.employer_find_student_form import EmplStudentSearchForm
@@ -246,37 +247,41 @@ def university_workspace():
     form_open = UniverOpenCourseForm()
     form_close = UniverCloseCourseForm()
     courses = []
-    student_found_table = ''
-    student_close = ''
+    student_find_table = ''
 
     if form_find.validate_on_submit():
         if form_find.find_submit.data:
-            student_id = str(form_find.student_id.data)
+            student_id = str(form_find.find_student_id.data)
             if not student_id.isdigit():
                 flash('ID студента, которого вы хотите найти, должен состоять только из цифр')
             student_id = int(student_id)
             db_sess = db_session.create_session()
+            student_find_table = db_sess.query(Student).filter(Student.id == student_id).first()
+            if not student_find_table:
+                flash("Неверное ID студента для поиска")
             courses = db_sess.query(Achievement).filter(
-                Achievement.student_id == student_id, Achievement.end_date == None).all()
-            student_found_table = db_sess.query(Student).filter(Student.id == student_id).first()
+                Achievement.student_id == student_id,
+                or_(Achievement.end_date == None,
+                    Achievement.end_date == "")).all()
 
-    if form_open.validate_on_submit():
+    elif form_open.validate_on_submit():
         if form_open.open_submit.data:
             ...
+            return redirect(url_for('employer_workspace'))
 
-    if form_close.validate_on_submit():
+    elif form_close.validate_on_submit():
         if form_close.close_submit.data:
-            student_id = str(form_close.student_id.data)
+            student_id = str(form_close.close_student_id.data)
         if not student_id.isdigit():
             flash('ID студента, которому вы хотите завершить курс, должен состоять только из цифр')
         student_id = int(student_id)
-        student_close = db_sess.query(Student).get(student_id)
 
-        got_title = str(form_close.course_title.data)
+        got_title = str(form_close.close_course_title.data)
         db_sess = db_session.create_session()
         found_course = db_sess.query(Achievement).filter(
             Achievement.title == got_title,
-            Achievement.end_date == None,
+            or_(Achievement.end_date == None,
+                Achievement.end_date == ""),
             Achievement.university_id == univer.id,
             Achievement.student_id == student_id
         ).first()
@@ -286,11 +291,11 @@ def university_workspace():
             flash("Курс закрыт успешно, поздравляем!")
         else:
             flash("Неверные данные для закрытия курса")
-    ...
+        return redirect(url_for('university_workspace'))
+
     return render_template('university_workspace.html',
                            form_find=form_find, form_close=form_close, form_open=form_open,
-                           student_find=student_found_table,
-                           student_close=student_close,
+                           student_find=student_find_table,
                            courses=courses,
                            joined_title=univer.title,
                            style=url_for('static', filename='css/style.css'))
@@ -321,7 +326,8 @@ def employer_workspace():
                 student_fullname = student.student_nsp.strip()
                 achievements = db_sess.query(Achievement).filter(
                     Achievement.student_id == student.id,
-                    Achievement.end_date != None).all()
+                    or_(Achievement.end_date != None,
+                        Achievement.end_date != "")).all()
 
                 if not achievements:
                     flash("У студента нет достижений.", "warning")

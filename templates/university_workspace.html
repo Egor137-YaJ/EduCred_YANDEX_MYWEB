@@ -1,21 +1,23 @@
 {% extends "workspace_base.html" %}
 
 {% block content %}
-    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% with messages = get_flashed_messages() %}
         {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <div class="alert alert-warning">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
     {% endwith %}
 
     <form method="POST" class="d-flex gap-2 mb-4 align-items-center">
         {{ form_find.hidden_tag() }}
-        {{ form_find.student_id(class_="form-control", id="find_student_id", placeholder="ID студента") }}
+        {{ form_find.find_student_id(class_="form-control", id="find_student_id", placeholder="ID студента") }}
         {{ form_find.find_submit(class_="btn btn-outline-primary") }}
     </form>
 
-    {% if student %}
+    {% if student_find %}
         <div class="alert alert-info" role="alert">
             <strong>Студент:</strong> {{ student_find.student_nsp }}
         </div>
@@ -57,13 +59,13 @@
         {{ form_open.hidden_tag() }}
 
         <div class="mb-3">
-            {{ form_open.student_id.label }}
-            {{ form_open.student_id(class="form-control", id="student_id") }}
+            {{ form_open.open_student_id.label }}
+            {{ form_open.open_student_id(class="form-control", id="student_id") }}
         </div>
 
         <div class="mb-3">
-            {{ form_open.course_title.label }}
-            {{ form_open.course_title(class="form-control", id="course_title") }}
+            {{ form_open.open_course_title.label }}
+            {{ form_open.open_course_title(class="form-control", id="course_title") }}
         </div>
 
         <div class="mb-3">
@@ -75,13 +77,13 @@
         {{ form_close.hidden_tag() }}
 
         <div class="mb-3">
-            {{ form_close.student_id.label }}
-            {{ form_close.student_id(class="form-control", id="close_student_id") }}
+            {{ form_close.close_student_id.label }}
+            {{ form_close.close_student_id(class="form-control", id="close_student_id") }}
         </div>
 
         <div class="mb-3">
-            {{ form_close.course_title.label }}
-            {{ form_close.course_title(class="form-control", id="close_course_title") }}
+            {{ form_close.close_course_title.label }}
+            {{ form_close.close_course_title(class="form-control", id="close_course_title") }}
         </div>
 
         <div class="mb-3">

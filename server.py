@@ -218,16 +218,8 @@ def login():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
-            if user.role == 'student':
-                login_user(user)
-                return redirect("/student_workspace")
-            elif user.role == 'university':
-                login_user(user)
-                return redirect("/university_workspace")
-            elif user.role == 'employer':
-                login_user(user)
-                return redirect("/employer_workspace")
-            return redirect('/home')
+            login_user(user)
+            return redirect('/workspace')
         return render_template('login.html', message="Wrong login or password",
                                form=form, style=url_for('static', filename='css/style.css'))
     return render_template('login.html', title='Authorization',

@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, redirect, url_for, session, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash
 
 from data import db_session
 from data.employer_find_student_form import EmplStudentSearchForm
@@ -377,13 +378,13 @@ def student_workspace():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    db = db_session
     db_sess = db_session.create_session()
-    user = current_user
+    user = db_sess.query(User).get(current_user.id)
+    born = ''
 
     if user.role == 'student':
         profile = db_sess.query(Student).filter_by(user_id=user.id).first()
-        print(profile.born)
+        born = profile.born.strftime('%d.%m.%Y')
         form = StudentProfileForm(obj=profile)
     elif user.role == 'employer':
         profile = db_sess.query(Employer).filter_by(user_id=user.id).first()
@@ -396,19 +397,18 @@ def profile():
         form.populate_obj(profile)
         pw = form.password.data
         if pw:
-            user.set_password(pw)
-
+            user.hashed_password = generate_password_hash(pw)
         try:
-            db.session.commit()
+            db_sess.commit()
             flash('Профиль успешно обновлён', 'success')
         except Exception as e:
-            db.session.rollback()
+            db_sess.rollback()
             flash('Ошибка при сохранении: ' + str(e), 'danger')
-        return redirect(url_for('profile.edit_profile'))
+        return redirect(url_for('profile'))
     form.email.data = user.email
 
     return render_template('profile.html', form=form, role=user.role, title='Личный кабинет', user=user,
-                           style=url_for('static', filename='css/style.css'))
+                           style=url_for('static', filename='css/style.css'), born=born)
 
 
 def main():

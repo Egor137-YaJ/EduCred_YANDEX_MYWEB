@@ -18,19 +18,18 @@ class StudentProfileForm(FlaskForm):
         render_kw={'readonly': True, 'class': 'form-control-plaintext'},
         validators=[DataRequired(), Email(message="Неверный формат почты")]
     )
-    password = PasswordField('Пароль', validators=[DataRequired(message="Введите пароль"), Length(min=6)])
+    password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
     confirm = PasswordField('Подтверждение пароля', validators=[
-        DataRequired(message="Повторите пароль"),
         EqualTo('password', message="Пароли не совпадают")
     ]
-                                     )
+                            )
     submit = SubmitField('Сохранить')
 
 
 class EmployerProfileForm(FlaskForm):
     INN = StringField('ИНН', render_kw={'readonly': True, 'class': 'form-control-plaintext'})
     title = StringField('Название', render_kw={'readonly': True, 'class': 'form-control-plaintext'})
-    boss_nsp = StringField('ФИО руководителе', validators=[DataRequired(message="Укажите ФИО руководителя")])
+    boss_nsp = StringField('ФИО руководителя', validators=[Optional()])
     scope = StringField('Специализация', validators=[Optional()])
     address = StringField('Адрес', validators=[Optional()])
     email = StringField(
@@ -38,9 +37,8 @@ class EmployerProfileForm(FlaskForm):
         render_kw={'readonly': True, 'class': 'form-control-plaintext'},
         validators=[DataRequired(), Email()]
     )
-    password = PasswordField('Пароль', validators=[DataRequired(message="Введите пароль"), Length(min=6)])
+    password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
     confirm = PasswordField('Подтверждение пароля', validators=[
-        DataRequired(message="Повторите пароль"),
         EqualTo('password', message="Пароли не совпадают")
     ])
     submit = SubmitField('Сохранить')
@@ -49,9 +47,7 @@ class EmployerProfileForm(FlaskForm):
 class UniversityProfileForm(FlaskForm):
     INN = StringField('ИНН', render_kw={'readonly': True, 'class': 'form-control-plaintext'})
     title = StringField('Название', render_kw={'readonly': True, 'class': 'form-control-plaintext'})
-    boss_nsp = StringField('ФИО руководителя',
-                                     validators=[DataRequired(message="Укажите ФИО руководителя")]
-                                     )
+    boss_nsp = StringField('ФИО руководителя', validators=[Optional()])
     type = StringField('Тип', validators=[Optional()])
     address = StringField('Адрес', validators=[Optional()])
     email = StringField(
@@ -59,9 +55,8 @@ class UniversityProfileForm(FlaskForm):
         render_kw={'readonly': True, 'class': 'form-control-plaintext'},
         validators=[DataRequired(), Email()]
     )
-    password = PasswordField('Пароль', validators=[DataRequired(message="Введите пароль"), Length(min=6)])
+    password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
     confirm = PasswordField('Подтверждение пароля', validators=[
-        DataRequired(message="Повторите пароль"),
         EqualTo('password', message="Пароли не совпадают")
     ])
     submit = SubmitField('Сохранить')

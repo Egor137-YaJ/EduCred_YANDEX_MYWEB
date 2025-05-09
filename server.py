@@ -392,12 +392,19 @@ def profile():
     else:
         profile = db_sess.query(University).filter_by(user_id=user.id).first()
         form = UniversityProfileForm(obj=profile)
+        ch = ['Академия', 'Университет', 'Институт',
+              'Техникум', 'Гимназия', 'Школа', 'Лицей',
+              'Коллледж', 'Училище', 'Онлайн-курс', 'Другое']
+        if profile.type in ch and form.type.data in ch:
+            form.type.data = str(ch.index(profile.type) + 1)
 
     if form.validate_on_submit():
         form.populate_obj(profile)
+        if user.role == 'university':
+            profile.type = dict(form.type.choices).get(form.type.data)
         pw = form.password.data
         if pw:
-            user.hashed_password = generate_password_hash(pw)
+            user.set_password(pw)
         try:
             db_sess.commit()
             flash('Профиль успешно обновлён', 'success')
@@ -409,6 +416,22 @@ def profile():
 
     return render_template('profile.html', form=form, role=user.role, title='Личный кабинет', user=user,
                            style=url_for('static', filename='css/style.css'), born=born)
+
+
+@app.route('/workspace')
+@login_required
+def workspace():
+    user = current_user
+    if user.role == 'student':
+        login_user(user)
+        return redirect("/student_workspace")
+    elif user.role == 'university':
+        login_user(user)
+        return redirect("/university_workspace")
+    elif user.role == 'employer':
+        login_user(user)
+        return redirect("/employer_workspace")
+    return redirect('/home')
 
 
 def main():

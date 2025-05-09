@@ -1,0 +1,58 @@
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="{{ style }}"/>
+    <link
+            rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+            integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+            crossorigin="anonymous"
+    >
+    <title>{{title}} - EduCred</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+</head>
+<body>
+<div class="container py-5">
+    <h1 class="mb-4">Личный кабинет</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, msg in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div>
+            {% for field in form if field.name != 'csrf_token' and field.name != 'submit' %}
+            <div class="mb-3">
+                {{ field.label(class_="form-label") }}
+                {{ field(class_="form-control") }}
+                {% if field.errors %}
+                <div class="text-danger small">
+                    {{ field.errors[0] }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-4">
+            {{ form.submit(class_="btn btn-primary") }}
+            <a href="{{ url_for('profile') }}" class="btn btn-secondary ms-2">Отмена</a>
+        </div>
+    </form>
+</div>
+
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-7gXfgmU3Z8SwjjphF3YG8+B+l0mzM0G8Nm4nqri2E6H95N4gRk+zT5RfnO6VA2zI"
+        crossorigin="anonymous"
+></script>
+</body>
+</html>

@@ -16,6 +16,7 @@ from data.Universities import University
 from data.Employers import Employer
 from data.Achievements import Achievement
 from data.find_info_by_INN import get_info_by_inn
+from data.ProfileForms import StudentProfileForm, EmployerProfileForm, UniversityProfileForm
 from data.config import secret_token
 
 app = Flask(__name__)
@@ -372,10 +373,49 @@ def student_workspace():
                            achievements=achievements_data,
                            style=url_for('static', filename='css/style.css'))
 
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    db = db_session
+    db_sess = db_session.create_session()
+    user = current_user
+
+    if user.role == 'student':
+        profile = db_sess.query(Student).filter_by(user_id=user.id).first()
+        print(profile.born)
+        form = StudentProfileForm(obj=profile)
+    elif user.role == 'employer':
+        profile = db_sess.query(Employer).filter_by(user_id=user.id).first()
+        form = EmployerProfileForm(obj=profile)
+    else:
+        profile = db_sess.query(University).filter_by(user_id=user.id).first()
+        form = UniversityProfileForm(obj=profile)
+
+    if form.validate_on_submit():
+        form.populate_obj(profile)
+        pw = form.password.data
+        if pw:
+            user.set_password(pw)
+
+        try:
+            db.session.commit()
+            flash('Профиль успешно обновлён', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash('Ошибка при сохранении: ' + str(e), 'danger')
+        return redirect(url_for('profile.edit_profile'))
+    form.email.data = user.email
+
+    return render_template('profile.html', form=form, role=user.role, title='Личный кабинет', user=user,
+                           style=url_for('static', filename='css/style.css'))
+
+
 def main():
     db_session.global_init("db/EduCred_data.db")
     port = int(os.environ.get("PORT", 8000))
     app.run(host='0.0.0.0', port=port)
+
 
 if __name__ == '__main__':
     main()

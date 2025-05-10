@@ -48,16 +48,17 @@
                     {% for ach in achievements %}
                     <tr>
                         <td>{{ ach.token }}</td>
-                        <td>{{ ach.description }}</td>
+                        <td>{{ ach.title }}</td>
                         <td>{{ ach.university_title }}</td>
                         <td>
-                            {% if ach.university_title %}
-                                <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Открыть PDF</a>
-                            {% else %}
+                            {% if ach.approve %}
                                 <audio controls>
                                     <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
                                     Ваш браузер не поддерживает аудио.
                                 </audio>
+                                <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank" class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
+                            {% else %}
+                                <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Открыть PDF</a>
                             {% endif %}
                         </td>
                     </tr>

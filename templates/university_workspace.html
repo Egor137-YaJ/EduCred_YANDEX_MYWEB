@@ -36,22 +36,22 @@
             </thead>
             <tbody>
             {% for course in courses %}
-            <tr>
-                <td>{{ course.title }}</td>
-                <td>{{ course.university.title }}</td>
-                <td>{{ course.start_date.strftime("%d.%m.%Y") }}</td>
-                <td>{{ course.grade or '—' }}</td>
-            </tr>
+                <tr>
+                    <td>{{ course.title }}</td>
+                    <td>{{ course.university.title }}</td>
+                    <td>{{ course.start_date.strftime("%d.%m.%Y") }}</td>
+                    <td>{{ course.grade or '—' }}</td>
+                </tr>
             {% else %}
-            {% if student_find %}
-            <tr>
-                <td colspan="3" class="text-center">Курсы не найдены</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="3" class="text-center">Введите ID студена для поиска</td>
-            </tr>
-            {% endif %}
+                {% if student_find %}
+                    <tr>
+                        <td colspan="3" class="text-center">Курсы не найдены</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center">Введите ID студена для поиска</td>
+                    </tr>
+                {% endif %}
             {% endfor %}
             </tbody>
         </table>
@@ -92,5 +92,52 @@
             {{ form_close.close_submit(class="btn btn-primary") }}
         </div>
     </form>
+
+    <div class="table-responsive mb-5">
+        <caption class="fw-bold">Таблица подтверждений</caption>
+        <table class="table table-bordered">
+            <thead class="table-light">
+            <tr>
+                <th>Название проекта</th>
+                <th>Дата написания</th>
+                <th>файл</th>
+                <th>Действие</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for proj in projs %}
+                <tr>
+                    <td>{{ proj.title }}</td>
+                    <td>{{ proj.start_date.strftime("%d.%m.%Y") }}</td>
+                    <td>
+                        <audio controls>
+                                        <source src="{{ url_for('static', filename=proj.file_path) }}" type="audio/mpeg">
+                                        Ваш браузер не поддерживает аудио.
+                        </audio>
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('manage_proj') }}" style="display:inline;">
+                            <input type="hidden" name="project_id" value="{{ proj.id }}">
+                            <input type="hidden" name="action" value="approve">
+                            <button type="submit" class="btn btn-success btn-sm">Принять</button>
+                        </form>
+
+                        <form method="POST" action="{{ url_for('manage_proj') }}" style="display:inline;">
+                            <input type="hidden" name="project_id" value="{{ proj.id }}">
+                            <input type="hidden" name="action" value="reject">
+                            <button type="submit" class="btn btn-danger btn-sm">Отклонить</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                {% if projs %}
+                    <tr>
+                        <td colspan="3" class="text-center">Проектов на подтверждение нет</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
 {% endblock %}

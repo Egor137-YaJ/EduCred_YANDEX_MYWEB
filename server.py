@@ -1,6 +1,6 @@
 import datetime
 import os
-from flask import Flask, render_template, redirect, url_for, session, flash
+from flask import Flask, render_template, redirect, url_for, session, flash, request, abort
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from sqlalchemy import or_
 
@@ -249,8 +249,9 @@ def university_workspace():
     form_close = UniverCloseCourseForm()
     courses = []
     student_find_table = ''
+    projs = db_sess.query(Achievement).filter(Achievement.university_id == univer.id).all()
 
-    if form_find.validate_on_submit():
+    if form_find.is_submitted() and not form_find.validate():
         if form_find.find_submit.data:
             student_id = str(form_find.find_student_id.data)
             if not student_id.isdigit():
@@ -322,8 +323,43 @@ def university_workspace():
                            form_find=form_find, form_close=form_close, form_open=form_open,
                            student_find=student_find_table,
                            courses=courses,
+                           projs=projs,
                            joined_title=univer.title,
                            style=url_for('static', filename='css/style.css'))
+
+
+@app.route('/manage_proj', methods=["POST"])
+@login_required
+def manage_proj():
+    db_sess = db_session.create_session()
+    proj_id = request.form.get('project_id')
+    action = request.form.get('action')
+    proj = db_sess.query(Achievement).get(proj_id)
+
+    if not proj:
+        abort(404)
+
+    if action == 'reject':
+        db_sess.delete(proj)
+        db_sess.commit()
+        flash("Проект отклонён и удалён", "info")
+
+    elif action == 'approve':
+        token = tokenize()
+        proj.token = token
+        proj.end_date = datetime.datetime.now()
+        proj.approve_own = pdf_creating(student_nsp=proj.student.student_nsp,
+                                        course_title=proj.title,
+                                        univer_title=proj.university.title,
+                                        start_date=proj.start_date,
+                                        end_date=proj.end_date,
+                                        univer_boss=proj.university.boss_nsp,
+                                        token=proj.token,
+                                        mark="approved",
+                                        type="proj")
+        flash("Проект подтверждён, сертификат подтверждения добавлен!", "success")
+
+    return redirect(url_for('university_workspace'))
 
 
 @app.route('/employer_workspace', methods=['GET', 'POST'])
@@ -362,10 +398,11 @@ def employer_workspace():
                         university = db_sess.query(University).filter(University.id == a.university_id).first()
                         achievements_data.append({
                             'token': a.token,
-                            'description': a.title,
+                            'title': a.title,
                             'university_title': university.title if university else "",
                             'student_id': student.id,
-                            'file_path': a.file_path
+                            'file_path': a.file_path,
+                            'approve': a.approve_path
                         })
                     session['student_id_current'] = student.id
                     session['entered_student_id_current'] = entered_student_id

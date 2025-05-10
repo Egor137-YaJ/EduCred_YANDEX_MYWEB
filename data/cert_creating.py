@@ -19,7 +19,7 @@ def hash_name(st, co, un_t):
     return hash_obj.hexdigest()
 
 
-def pdf_creating(student_nsp, course_title, univer_title, start_date, end_date, univer_boss, token, mark="—"):
+def pdf_creating(student_nsp, course_title, univer_title, start_date, end_date, univer_boss, token, mark="—", type="course"):
     os.makedirs('static/achievements', exist_ok=True)
 
     clean_student = student_nsp.replace(' ', '_')
@@ -38,18 +38,25 @@ def pdf_creating(student_nsp, course_title, univer_title, start_date, end_date, 
     c.drawCentredString(width / 2, height - 3 * cm, univer_title)
 
     c.setFont("DejaVuSans", 14)
-    c.drawCentredString(width / 2, height / 2 + 2.5 * cm,
-                        f"{student_nsp} успешно завершил(а) курс")
+    if type != 'course':
+        c.drawCentredString(width / 2, height / 2 + 2.5 * cm,
+                            f"{student_nsp} успешно сдал проект")
+    else:
+        c.drawCentredString(width / 2, height / 2 + 2.5 * cm,
+                            f"{student_nsp} успешно завершил(а) курс")
     c.drawCentredString(width / 2, height / 2 + 1.8 * cm, f"«{course_title}»")
 
     c.setFont("DejaVuSans-Bold", 14)
     c.drawCentredString(width / 2, height / 2 + 1.0 * cm, f"с оценкой: {mark}")
 
     c.setFont("DejaVuSans", 12)
-    c.drawRightString(width - 2.5 * cm, height / 2 + 0.15 * cm,
-                      f"Сроки обучения: {start_date.strftime('%d.%m.%Y')} — {end_date.strftime('%d.%m.%Y')}")
+    if type != 'course':
+        c.drawRightString(width - 2.5 * cm, height / 2 + 0.15 * cm,
+                          f"Проект сдан: {end_date.strftime('%d.%m.%Y')}. Дата выдачи сертификата: {end_date.strftime('%d.%m.%Y')}.")
+    else:
+        c.drawRightString(width - 2.5 * cm, height / 2 + 0.15 * cm,
+                          f"Сроки обучения: {start_date.strftime('%d.%m.%Y')} — {end_date.strftime('%d.%m.%Y')}")
     c.drawString(2.5 * cm, 6 * cm, f"Сертификат выдан: {univer_boss}")
-
 
     c.setFont("DejaVuSans", 8)
     c.setFillColor(grey)

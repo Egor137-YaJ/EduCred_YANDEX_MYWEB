@@ -29,6 +29,7 @@
             <thead class="table-light">
             <tr>
                 <th>Название курса</th>
+                <th>Название Учреждения</th>
                 <th>Дата начала</th>
                 <th>Оценка</th>
             </tr>
@@ -37,6 +38,7 @@
             {% for course in courses %}
             <tr>
                 <td>{{ course.title }}</td>
+                <td>{{ course.university.title }}</td>
                 <td>{{ course.start_date.strftime("%d.%m.%Y") }}</td>
                 <td>{{ course.grade or '—' }}</td>
             </tr>

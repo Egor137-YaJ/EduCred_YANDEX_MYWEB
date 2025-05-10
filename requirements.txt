@@ -6,3 +6,4 @@ requests
 werkzeug
 sqlalchemy
 sqlalchemy_serializer
+reportlab

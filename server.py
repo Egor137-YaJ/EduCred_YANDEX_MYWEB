@@ -19,6 +19,7 @@ from data.Universities import University
 from data.Employers import Employer
 from data.Achievements import Achievement
 from data.find_info_by_INN import get_info_by_inn
+from data.cert_creating import tokenize, pdf_creating
 from data.config import secret_token
 
 
@@ -253,45 +254,69 @@ def university_workspace():
         if form_find.find_submit.data:
             student_id = str(form_find.find_student_id.data)
             if not student_id.isdigit():
-                flash('ID студента, которого вы хотите найти, должен состоять только из цифр')
+                flash('ID студента, которого вы хотите найти, должен состоять только из цифр', "warning")
             student_id = int(student_id)
             db_sess = db_session.create_session()
             student_find_table = db_sess.query(Student).filter(Student.id == student_id).first()
             if not student_find_table:
-                flash("Неверное ID студента для поиска")
+                flash("Неверное ID студента для поиска", "warning")
             courses = db_sess.query(Achievement).filter(
                 Achievement.student_id == student_id,
                 or_(Achievement.end_date == None,
-                    Achievement.end_date == "")).all()
+                Achievement.end_date == "")
+            ).all()
 
     elif form_open.validate_on_submit():
         if form_open.open_submit.data:
-            ...
-            return redirect(url_for('employer_workspace'))
+            student_id = str(form_open.open_student_id.data)
+            if not student_id.isdigit():
+                flash('ID студента, которому вы хотите открыть курс, должен состоять только из цифр', "warning")
+            student_id = int(student_id)
+            db_sess = db_session.create_session()
+            new_ach = Achievement(
+                title=str(form_open.open_course_title.data),
+                start_date=datetime.datetime.now(),
+                student_id=student_id,
+                university_id=univer.id
+            )
+            db_sess.add(new_ach)
+            db_sess.commit()
+            flash(f"Курс для студента с ID {student_id} открыт успешно, удачи!", "success")
+            return redirect(url_for('university_workspace'))
 
     elif form_close.validate_on_submit():
         if form_close.close_submit.data:
             student_id = str(form_close.close_student_id.data)
-        if not student_id.isdigit():
-            flash('ID студента, которому вы хотите завершить курс, должен состоять только из цифр')
-        student_id = int(student_id)
+            if not student_id.isdigit():
+                flash('ID студента, которому вы хотите завершить курс, должен состоять только из цифр', "warning")
+            student_id = int(student_id)
 
-        got_title = str(form_close.close_course_title.data)
-        db_sess = db_session.create_session()
-        found_course = db_sess.query(Achievement).filter(
-            Achievement.title == got_title,
-            or_(Achievement.end_date == None,
-                Achievement.end_date == ""),
-            Achievement.university_id == univer.id,
-            Achievement.student_id == student_id
-        ).first()
-        if found_course:
-            found_course.end_date = datetime.datetime.now()
-            db_sess.commit()
-            flash("Курс закрыт успешно, поздравляем!")
-        else:
-            flash("Неверные данные для закрытия курса")
-        return redirect(url_for('university_workspace'))
+            got_title = str(form_close.close_course_title.data)
+            db_sess = db_session.create_session()
+            found_course = db_sess.query(Achievement).filter(
+                Achievement.title == got_title,
+                or_(Achievement.end_date == None,
+                    Achievement.end_date == ""),
+                Achievement.university_id == univer.id,
+                Achievement.student_id == student_id
+            ).first()
+            if found_course:
+                token = tokenize()
+                found_course.token = token
+                found_course.end_date = datetime.datetime.now()
+                file_path = pdf_creating(student_nsp=found_course.student.student_nsp,
+                                         course_title=found_course.title,
+                                         univer_title=univer.title,
+                                         start_date=found_course.start_date,
+                                         end_date=found_course.end_date,
+                                         univer_boss=univer.boss_nsp,
+                                         token=token)
+                found_course.file_path = file_path
+                db_sess.commit()
+                flash(f"Курс закрыт успешно, поздравляем! Токен: {token}.", "success")
+                return redirect(url_for('university_workspace'))
+            else:
+                flash("Неверные данные для закрытия курса", "warning")
 
     return render_template('university_workspace.html',
                            form_find=form_find, form_close=form_close, form_open=form_open,
@@ -326,8 +351,9 @@ def employer_workspace():
                 student_fullname = student.student_nsp.strip()
                 achievements = db_sess.query(Achievement).filter(
                     Achievement.student_id == student.id,
-                    or_(Achievement.end_date != None,
-                        Achievement.end_date != "")).all()
+                    Achievement.end_date.isnot(None),
+                    Achievement.end_date != ""
+                ).all()
 
                 if not achievements:
                     flash("У студента нет достижений.", "warning")

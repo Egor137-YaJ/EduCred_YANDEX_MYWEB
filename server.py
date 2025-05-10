@@ -60,6 +60,7 @@ def home():
                             f'{achievement.student.student_nsp} проходит курс «{achievement.title}»'
                             ', но ещё не окончил(а).', 'info')
                     university = db_sess.query(University).filter_by(id=achievement.university_id).first()
+                    print(achievement.approve_path)
 
         return render_template(
             'home.html',

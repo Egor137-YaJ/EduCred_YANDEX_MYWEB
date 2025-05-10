@@ -47,10 +47,19 @@
             <p class="mb-3">
                 <strong>Токен:</strong> {{ achievement.token }}
             </p>
-            <a href=""
-               class="btn btn-success">
+            {% if achievement.approve_path != 'Not Required' %}
+            <audio controls>
+                <source src="{{ url_for('static', filename=achievement.file_path) }}" type="audio/mpeg">
+                Ваш браузер не поддерживает аудио.
+            </audio>
+            <a href="{{ url_for('static', filename=achievement.approve) }}" target="_blank" class="btn btn-success">
                 Открыть сертификат
             </a>
+            {% else %}
+            <a href="{{ url_for('static', filename=achievement.file_path) }}" target="_blank" class="btn btn-success">
+                Открыть сертификат
+            </a>
+            {% endif %}
         </div>
     </div>
     {% endif %}

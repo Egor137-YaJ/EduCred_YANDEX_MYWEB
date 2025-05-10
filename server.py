@@ -3,6 +3,7 @@ import os
 from flask import Flask, render_template, redirect, url_for, session, flash, request, abort
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from sqlalchemy import or_
+from sqlalchemy.testing import not_in
 
 from data import db_session
 from data.employer_find_student_form import EmplStudentSearchForm
@@ -23,13 +24,11 @@ from data.find_info_by_INN import get_info_by_inn
 from data.cert_creating import tokenize, pdf_creating
 from data.config import secret_token
 
-
 app = Flask(__name__)
 app.config["SECRET_KEY"] = secret_token
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-
 
 ...
 
@@ -66,13 +65,13 @@ def register_university():
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
             return render_template('register_university.html', title='University Registration',
-                                    form=form, style=url_for('static', filename='css/style.css'),
-                                    message="Account with this password already exists")
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
 
         title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
         type = dict(form.type.choices).get(form.type.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-             return render_template('register_university.html', title='University Registration',
+            return render_template('register_university.html', title='University Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Error in INN request - may be non existing INN")
 
@@ -132,12 +131,12 @@ def register_employer():
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
             return render_template('register_employer.html', title='Employer Registration',
-                                    form=form, style=url_for('static', filename='css/style.css'),
-                                    message="Account with this password already exists")
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
 
         title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
         if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-             return render_template('register_employer.html', title='Employer Registration',
+            return render_template('register_employer.html', title='Employer Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Error in INN request - may be non existing INN")
 
@@ -186,11 +185,11 @@ def register_student():
                                    message="Account with this email already exists")
         if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
             return render_template('register_student.html', title='Student Registration',
-                                    form=form, style=url_for('static', filename='css/style.css'),
-                                    message="Account with this password already exists")
+                                   form=form, style=url_for('static', filename='css/style.css'),
+                                   message="Account with this password already exists")
 
         if form.born_date.data.year < 1940:
-             return render_template('register_student.html', title='Student Registration',
+            return render_template('register_student.html', title='Student Registration',
                                    form=form, style=url_for('static', filename='css/style.css'),
                                    message="Non existing botn date")
 
@@ -269,7 +268,7 @@ def university_workspace():
             courses = db_sess.query(Achievement).filter(
                 Achievement.student_id == student_id,
                 or_(Achievement.end_date == None,
-                Achievement.end_date == "")
+                    Achievement.end_date == "")
             ).all()
 
     if form_open.validate_on_submit():
@@ -356,14 +355,14 @@ def manage_proj():
         proj.token = token
         proj.end_date = datetime.datetime.now()
         proj.approve_path = pdf_creating(student_nsp=proj.student.student_nsp,
-                                        course_title=proj.title,
-                                        univer_title=proj.university.title,
-                                        start_date=proj.start_date,
-                                        end_date=proj.end_date,
-                                        univer_boss=proj.university.boss_nsp,
-                                        token=proj.token,
-                                        mark="approved",
-                                        type="proj")
+                                         course_title=proj.title,
+                                         univer_title=proj.university.title,
+                                         start_date=proj.start_date,
+                                         end_date=proj.end_date,
+                                         univer_boss=proj.university.boss_nsp,
+                                         token=proj.token,
+                                         mark="approved",
+                                         type="proj")
         db_sess.commit()
         flash("Проект подтверждён, сертификат подтверждения добавлен!", "success")
 
@@ -444,11 +443,14 @@ def employer_workspace():
 @app.route('/student_workspace', methods=['GET', 'POST'])
 @login_required
 def student_workspace():
-    achievements_data = []
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     student = user.student
     form = UploadMusicForm()
+    approved_achievements_data = []
+    nonapproved_achievements_data = []
+    active_courses_data = []
+    inactive_courses_data = []
 
     univers = db_sess.query(University).all()
     form.univer_title.choices = [(u.title, u.title) for u in univers]
@@ -469,31 +471,82 @@ def student_workspace():
         return redirect(url_for('student_workspace'))
 
     student_fullname = student.student_nsp.strip()
-    achievements = db_sess.query(Achievement).filter(
+
+    approved_achievements = db_sess.query(Achievement).filter(
         Achievement.student_id == student.id,
-        Achievement.end_date.isnot(None),
-        Achievement.end_date != ""
+        Achievement.approve_path.isnot(None),
+        Achievement.approve_path != "Not Required"
     ).all()
 
-    if not achievements:
-        flash("У студента нет достижений.", "warning")
-    else:
-        for a in achievements:
-            university = db_sess.query(University).filter(University.id == a.university_id).first()
-            achievements_data.append({
-                'token': a.token,
-                'title': a.title,
-                'university_title': university.title if university else "",
-                'student_id': student.id,
-                'file_path': a.file_path,
-                'approve': a.approve_path
-            })
-        session['student_id_current'] = student.id
+    nonapproved_achievements = db_sess.query(Achievement).filter(
+        Achievement.student_id == student.id,
+        Achievement.approve_path.is_(None)
+    ).all()
+
+    active_courses = db_sess.query(Achievement).filter(
+        Achievement.student_id == student.id,
+        Achievement.approve_path == "Not Required",
+        Achievement.end_date.is_(None),
+    ).all()
+
+    inactive_courses = db_sess.query(Achievement).filter(
+        Achievement.student_id == student.id,
+        Achievement.end_date.isnot(None),
+        Achievement.end_date != "",
+        Achievement.approve_path == "Not Required"
+    ).all()
+
+    # if not (approved_achievements or nonapproved_achievements or active_courses or inactive_courses):
+    #     flash("У студента нет достижений.", "warning")
+    # else:
+    for a in approved_achievements:
+        university = db_sess.query(University).filter(University.id == a.university_id).first()
+        approved_achievements_data.append({
+            'token': a.token,
+            'title': a.title,
+            'university_title': university.title if university else "",
+            'student_id': student.id,
+            'file_path': a.file_path,
+            'approve': a.approve_path
+        })
+
+    for a in nonapproved_achievements:
+        university = db_sess.query(University).filter(University.id == a.university_id).first()
+        nonapproved_achievements_data.append({
+            'title': a.title,
+            'university_title': university.title if university else "",
+            'student_id': student.id,
+            'file_path': a.file_path,
+        })
+
+    for a in active_courses:
+        university = db_sess.query(University).filter(University.id == a.university_id).first()
+        active_courses_data.append({
+            'title': a.title,
+            'university_title': university.title if university else "",
+            'student_id': student.id,
+        })
+
+    for a in inactive_courses:
+        university = db_sess.query(University).filter(University.id == a.university_id).first()
+        inactive_courses_data.append({
+            'token': a.token,
+            'title': a.title,
+            'university_title': university.title if university else "",
+            'student_id': student.id,
+            'file_path': a.file_path,
+        })
+    session['student_id_current'] = student.id
+
     return render_template('student_workspace.html',
                            form=form,
                            joined_title=student_fullname,
-                           achievements=achievements_data,
+                           approved_achievements=approved_achievements_data,
+                           nonapproved_achievements=nonapproved_achievements_data,
+                           active_courses=active_courses_data,
+                           inactive_courses=inactive_courses_data,
                            style=url_for('static', filename='css/style.css'))
+
 
 def main():
     db_session.global_init("db/EduCred_data.db")

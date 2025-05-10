@@ -476,6 +476,8 @@ def student_workspace():
     nonapproved_achievements_data = []
     active_courses_data = []
     inactive_courses_data = []
+    employers_data = []
+    student_fullname = student.student_nsp.strip()
 
     univers = db_sess.query(University).all()
     form.univer_title.choices = [(u.title, u.title) for u in univers]
@@ -495,7 +497,20 @@ def student_workspace():
         db_sess.commit()
         return redirect(url_for('student_workspace'))
 
-    student_fullname = student.student_nsp.strip()
+    employers_ids = list(map(int, student.employer_id.split(';')))
+
+    employers = db_sess.query(Employer).filter(
+        Employer.id.in_(employers_ids)
+    ).all()
+
+    for e in employers:
+        employers_data.append({
+            'INN': e.INN,
+            'title': e.title,
+            'address': e.address,
+            'boss_nsp': e.boss_nsp,
+            'phone_num': e.phone_num
+        })
 
     approved_achievements = db_sess.query(Achievement).filter(
         Achievement.student_id == student.id,
@@ -521,9 +536,6 @@ def student_workspace():
         Achievement.approve_path == "Not Required"
     ).all()
 
-    # if not (approved_achievements or nonapproved_achievements or active_courses or inactive_courses):
-    #     flash("У студента нет достижений.", "warning")
-    # else:
     for a in approved_achievements:
         university = db_sess.query(University).filter(University.id == a.university_id).first()
         approved_achievements_data.append({
@@ -562,7 +574,6 @@ def student_workspace():
             'file_path': a.file_path,
         })
     session['student_id_current'] = student.id
-
     return render_template('student_workspace.html',
                            form=form,
                            joined_title=student_fullname,
@@ -570,6 +581,7 @@ def student_workspace():
                            nonapproved_achievements=nonapproved_achievements_data,
                            active_courses=active_courses_data,
                            inactive_courses=inactive_courses_data,
+                           employers=employers_data,
                            style=url_for('static', filename='css/style.css'))
 
 

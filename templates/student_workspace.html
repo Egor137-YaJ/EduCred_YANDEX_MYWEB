@@ -1,41 +1,99 @@
 {% extends "workspace_base.html" %}
 {% block content %}
+<h1 align="center">Страничка студента</h1>
+<div class="container">
+    <br>
+    <h2 align="center">Приглашения на собеседование</h2>
+    {% if employers %}
+    <div class="table-box">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>ИНН</th>
+                <th>Наниматель</th>
+                <th>Адрес</th>
+                <th>ФИО управляющего</th>
+                <th>Контактный номер</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for emp in employers %}
+            <tr>
+                <td>{{ emp.INN }}</td>
+                <td>{{ emp.title }}</td>
+                <td>{{ emp.address }}</td>
+                <td>{{ emp.boss_nsp }}</td>
+                <td>{{ emp.phone_num }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
 <br>
 <h2 align="center">Добавить достижение</h2>
 <br>
-<div class="upload_file">
-    <form method="POST" enctype="multipart/form-data">
+<form method="POST" enctype="multipart/form-data">
+    <div class="form-group">
         <p>{{ form.hidden_tag() }}</p>
-        <p>{{ form.name.label }}</p>
-        <p>{{ form.name}}</p>
-        <p>{{ form.audio}}</p>
-        <p>{{ form.univer_title.label }}</p>
-        <p>{{ form.univer_title }}</p>
-        <p>{{ form.submit(type="submit", class="btn btn-success btn-equal-height") }}</p>
+        <h3>{{ form.name.label }}</h3>
+        <p>{{ form.name(class="form-control", placeholder="Введите наименование достижения") }}</p>
+
+        <h3>Композиция</h3>
+        <p>{{ form.audio()}}</p>
+
+        <h3>{{ form.univer_title.label }}</h3>
+        <p>{{ form.univer_title(class="form-control") }}</p>
+
+        <p>{{ form.submit(class="btn btn-primary mb-2") }}</p>
         {% for error in form.audio.errors %}
         <div class="alert alert-danger" role="alert">
             {{ error }}
         </div>
         {% endfor %}
-    </form>
-</div>
+    </div>
+</form>
 
 <br>
 <br>
 <h2 align="center">Ваши достижения</h2>
 <div class="container">
-
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <div class="flash-messages">
-        {% for message in messages %}
-        <div class="alert alert-warning">{{ message }}</div>
-        {% endfor %}
+    <h3>Неподтвержденные достижения</h3>
+    {% if nonapproved_achievements %}
+    <div class="table-box">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Название достижения</th>
+                <th>Учебное заведение</th>
+                <th>Файл</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for ach in nonapproved_achievements %}
+            <tr>
+                <td>{{ ach.title }}</td>
+                <td>{{ ach.university_title }}</td>
+                <td>
+                    <audio controls>
+                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                        Ваш браузер не поддерживает аудио.
+                    </audio>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-warning" role="alert">
+        Неподтвержденные достижения отсутствуют
     </div>
     {% endif %}
-    {% endwith %}
 
-    <br><h2>Подтвержденные достижения</h2>
+    <br>
+    <h3>Подтвержденные достижения</h3>
     {% if approved_achievements %}
     <div class="table-box">
         <table class="table table-striped">
@@ -71,38 +129,14 @@
             </tbody>
         </table>
     </div>
-    {% endif %}
-
-    <br><h2>Неподтвержденные достижения</h2>
-    {% if nonapproved_achievements %}
-    <div class="table-box">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Название достижения</th>
-                <th>Учебное заведение</th>
-                <th>Файл</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for ach in nonapproved_achievements %}
-            <tr>
-                <td>{{ ach.title }}</td>
-                <td>{{ ach.university_title }}</td>
-                <td>
-                    <audio controls>
-                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                        Ваш браузер не поддерживает аудио.
-                    </audio>
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    {% else %}
+    <div class="alert alert-warning" role="alert">
+        Подтвержденные достижения отсутствуют
     </div>
     {% endif %}
 
-    <br><h2>Активные курсы</h2>
+    <br>
+    <h3>Активные курсы</h3>
     {% if active_courses %}
     <div class="table-box">
         <table class="table table-striped">
@@ -122,9 +156,14 @@
             </tbody>
         </table>
     </div>
+    {% else %}
+    <div class="alert alert-warning" role="alert">
+        Активные курсы отсутствуют
+    </div>
     {% endif %}
 
-    <br><h2>Оконченные курсы</h2>
+    <br>
+    <h3>Оконченные курсы</h3>
     {% if inactive_courses %}
     <div class="table-box">
         <table class="table table-striped">
@@ -155,6 +194,10 @@
             {% endfor %}
             </tbody>
         </table>
+    </div>
+    {% else %}
+    <div class="alert alert-warning" role="alert">
+        Оконченные курсы отсутствуют
     </div>
     {% endif %}
 

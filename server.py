@@ -511,9 +511,6 @@ def student_workspace():
         Achievement.approve_path == "Not Required"
     ).all()
 
-    # if not (approved_achievements or nonapproved_achievements or active_courses or inactive_courses):
-    #     flash("У студента нет достижений.", "warning")
-    # else:
     for a in approved_achievements:
         university = db_sess.query(University).filter(University.id == a.university_id).first()
         approved_achievements_data.append({

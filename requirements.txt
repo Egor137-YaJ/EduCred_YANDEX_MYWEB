@@ -7,3 +7,4 @@ werkzeug
 sqlalchemy
 sqlalchemy_serializer
 reportlab
+email-validator

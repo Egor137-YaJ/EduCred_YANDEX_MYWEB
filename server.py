@@ -4,6 +4,7 @@ from flask import Flask, render_template, redirect, url_for, session, flash, req
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from sqlalchemy import or_
 from sqlalchemy.testing import not_in
+from werkzeug.security import generate_password_hash
 
 from data import db_session
 from data.employer_find_student_form import EmplStudentSearchForm
@@ -22,6 +23,7 @@ from data.Employers import Employer
 from data.Achievements import Achievement
 from data.find_info_by_INN import get_info_by_inn
 from data.cert_creating import tokenize, pdf_creating
+from data.ProfileForms import StudentProfileForm, EmployerProfileForm, UniversityProfileForm
 from data.config import secret_token
 
 app = Flask(__name__)
@@ -39,11 +41,42 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
-@app.route('/home')
-@app.route('/')
+@app.route('/home', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def home():
     logout_user()
-    return render_template('home.html', title='Home Page', style=url_for('static', filename='css/style.css'))
+    try:
+        db_sess = db_session.create_session()
+        token = None
+        achievement = None
+        university = None
+
+        if request.method == 'POST':
+            token = request.form.get('token', '').strip()
+            if not token:
+                flash('Введите токен достижения', 'warning')
+            else:
+                achievement = db_sess.query(Achievement).filter_by(token=token).first()
+                if not achievement:
+                    message_type = 'not_found'
+                    flash(f'Достижение с токеном «{token}» не найдено.', 'danger')
+                else:
+                    if achievement.end_date is None:
+                        flash(
+                            f'{achievement.student.student_nsp} проходит курс «{achievement.title}»'
+                            ', но ещё не окончил(а).', 'info')
+                    university = db_sess.query(University).filter_by(id=achievement.university_id).first()
+
+        return render_template(
+            'home.html',
+            token=token,
+            achievement=achievement,
+            university=university
+        )
+    except Exception as e:
+        flash(f'Произошла непредвиденная ошибка, попробуйте ещё раз', 'danger')
+        app.logger.error(e)
+        return render_template('home.html', token=None, result=None, university=None)
 
 
 @app.route('/register_university', methods=['GET', 'POST'])
@@ -222,16 +255,8 @@ def login():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
-            if user.role == 'student':
-                login_user(user)
-                return redirect("/student_workspace")
-            elif user.role == 'university':
-                login_user(user)
-                return redirect("/university_workspace")
-            elif user.role == 'employer':
-                login_user(user)
-                return redirect("/employer_workspace")
-            return redirect('/home')
+            login_user(user)
+            return redirect('/workspace')
         return render_template('login.html', message="Wrong login or password",
                                form=form, style=url_for('static', filename='css/style.css'))
     return render_template('login.html', title='Authorization',
@@ -546,6 +571,65 @@ def student_workspace():
                            active_courses=active_courses_data,
                            inactive_courses=inactive_courses_data,
                            style=url_for('static', filename='css/style.css'))
+
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).get(current_user.id)
+    born = ''
+
+    if user.role == 'student':
+        profile = db_sess.query(Student).filter_by(user_id=user.id).first()
+        born = profile.born.strftime('%d.%m.%Y')
+        form = StudentProfileForm(obj=profile)
+    elif user.role == 'employer':
+        profile = db_sess.query(Employer).filter_by(user_id=user.id).first()
+        form = EmployerProfileForm(obj=profile)
+    else:
+        profile = db_sess.query(University).filter_by(user_id=user.id).first()
+        form = UniversityProfileForm(obj=profile)
+        ch = ['Академия', 'Университет', 'Институт',
+              'Техникум', 'Гимназия', 'Школа', 'Лицей',
+              'Коллледж', 'Училище', 'Онлайн-курс', 'Другое']
+        if profile.type in ch and form.type.data in ch:
+            form.type.data = str(ch.index(profile.type) + 1)
+
+    if form.validate_on_submit():
+        form.populate_obj(profile)
+        if user.role == 'university':
+            profile.type = dict(form.type.choices).get(form.type.data)
+        pw = form.password.data
+        if pw:
+            user.set_password(pw)
+        try:
+            db_sess.commit()
+            flash('Профиль успешно обновлён', 'success')
+        except Exception as e:
+            db_sess.rollback()
+            app.logger.error('An error occurred: %s', e)
+        return redirect(url_for('profile'))
+    form.email.data = user.email
+
+    return render_template('profile.html', form=form, role=user.role, title='Личный кабинет', user=user,
+                           style=url_for('static', filename='css/style.css'), born=born)
+
+
+@app.route('/workspace')
+@login_required
+def workspace():
+    user = current_user
+    if user.role == 'student':
+        login_user(user)
+        return redirect("/student_workspace")
+    elif user.role == 'university':
+        login_user(user)
+        return redirect("/university_workspace")
+    elif user.role == 'employer':
+        login_user(user)
+        return redirect("/employer_workspace")
+    return redirect('/home')
 
 
 def main():

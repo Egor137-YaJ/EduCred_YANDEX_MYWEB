@@ -1,4 +1,5 @@
 import datetime
+import uuid
 import sqlalchemy
 from flask_login import UserMixin
 from sqlalchemy import orm

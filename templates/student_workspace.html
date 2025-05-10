@@ -1,5 +1,35 @@
 {% extends "workspace_base.html" %}
 {% block content %}
+<div class="container">
+    <br>
+    <h2 align="center">Приглашения на собеседование</h2>
+    {% if employers %}
+    <div class="table-box">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>ИНН</th>
+                <th>Наниматель</th>
+                <th>Адрес</th>
+                <th>ФИО управляющего</th>
+                <th>Контактный номер</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for emp in employers %}
+            <tr>
+                <td>{{ emp.INN }}</td>
+                <td>{{ emp.title }}</td>
+                <td>{{ emp.address }}</td>
+                <td>{{ emp.boss_nsp }}</td>
+                <td>{{ emp.phone_num }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
 <br>
 <h2 align="center">Добавить достижение</h2>
 <br>
@@ -34,8 +64,39 @@
     </div>
     {% endif %}
     {% endwith %}
+    <br>
 
-    <br><h2>Подтвержденные достижения</h2>
+    <h2>Неподтвержденные достижения</h2>
+    {% if nonapproved_achievements %}
+    <div class="table-box">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Название достижения</th>
+                <th>Учебное заведение</th>
+                <th>Файл</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for ach in nonapproved_achievements %}
+            <tr>
+                <td>{{ ach.title }}</td>
+                <td>{{ ach.university_title }}</td>
+                <td>
+                    <audio controls>
+                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                        Ваш браузер не поддерживает аудио.
+                    </audio>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <br>
+    <h2>Подтвержденные достижения</h2>
     {% if approved_achievements %}
     <div class="table-box">
         <table class="table table-striped">
@@ -73,36 +134,8 @@
     </div>
     {% endif %}
 
-    <br><h2>Неподтвержденные достижения</h2>
-    {% if nonapproved_achievements %}
-    <div class="table-box">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Название достижения</th>
-                <th>Учебное заведение</th>
-                <th>Файл</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for ach in nonapproved_achievements %}
-            <tr>
-                <td>{{ ach.title }}</td>
-                <td>{{ ach.university_title }}</td>
-                <td>
-                    <audio controls>
-                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                        Ваш браузер не поддерживает аудио.
-                    </audio>
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% endif %}
-
-    <br><h2>Активные курсы</h2>
+    <br>
+    <h2>Активные курсы</h2>
     {% if active_courses %}
     <div class="table-box">
         <table class="table table-striped">
@@ -124,7 +157,8 @@
     </div>
     {% endif %}
 
-    <br><h2>Оконченные курсы</h2>
+    <br>
+    <h2>Оконченные курсы</h2>
     {% if inactive_courses %}
     <div class="table-box">
         <table class="table table-striped">

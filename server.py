@@ -483,8 +483,8 @@ def student_workspace():
     form.univer_title.choices = [(u.title, u.title) for u in univers]
     if form.validate_on_submit():
         ach = form.audio.data
-        ach.save(os.path.join('static/achievements', f'{form.name.data}.mp3'))
-        short_path = os.path.join('achievements', f'{form.name.data}.mp3')
+        ach.save(os.path.join('static', 'achievements', f'{form.name.data}.mp3'))
+        short_path = f'achievements/{form.name.data}.mp3'
         chosen_univer = db_sess.query(University).filter(University.title == form.univer_title.data).first()
         achievement = Achievement(
             file_path=short_path,

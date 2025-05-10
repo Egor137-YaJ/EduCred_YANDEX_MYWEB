@@ -59,147 +59,181 @@
 <br>
 <h2 align="center">Ваши достижения</h2>
 <div class="container">
-    <h3>Неподтвержденные достижения</h3>
-    {% if nonapproved_achievements %}
-    <div class="table-box">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Название достижения</th>
-                <th>Учебное заведение</th>
-                <th>Файл</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for ach in nonapproved_achievements %}
-            <tr>
-                <td>{{ ach.title }}</td>
-                <td>{{ ach.university_title }}</td>
-                <td>
-                    <audio controls>
-                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                        Ваш браузер не поддерживает аудио.
-                    </audio>
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    <a class="d-block fw-bold text-decoration-none"
+       data-bs-toggle="collapse"
+       href="#unconfirmed"
+       role="button"
+       aria-expanded="false"
+       aria-controls="unconfirmed"><h3>Неподтвержденные достижения</h3></a>
+    <div class="collapse" id="unconfirmed">
+        {% if nonapproved_achievements %}
+        <div class="table-box">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Название достижения</th>
+                    <th>Учебное заведение</th>
+                    <th>Файл</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for ach in nonapproved_achievements %}
+                <tr>
+                    <td>{{ ach.title }}</td>
+                    <td>{{ ach.university_title }}</td>
+                    <td>
+                        <audio controls>
+                            <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                            Ваш браузер не поддерживает аудио.
+                        </audio>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            Неподтвержденные достижения отсутствуют
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="alert alert-warning" role="alert">
-        Неподтвержденные достижения отсутствуют
-    </div>
-    {% endif %}
 
     <br>
-    <h3>Подтвержденные достижения</h3>
-    {% if approved_achievements %}
-    <div class="table-box">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Токен</th>
-                <th>Название достижения</th>
-                <th>Учебное заведение</th>
-                <th>Файл</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for ach in approved_achievements %}
-            <tr>
-                <td>{{ ach.token }}</td>
-                <td>{{ ach.title }}</td>
-                <td>{{ ach.university_title }}</td>
-                <td>
-                    {% if ach.approve %}
-                    <audio controls>
-                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                        Ваш браузер не поддерживает аудио.
-                    </audio>
-                    <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank"
-                       class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
-                    {% else %}
-                    <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank"
-                       class="btn btn-outline-primary btn-sm">Открыть PDF</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    <a class="d-block fw-bold text-decoration-none"
+       data-bs-toggle="collapse"
+       href="#confirmed"
+       role="button"
+       aria-expanded="false"
+       aria-controls="confirmed">
+        <h3>Подтвержденные достижения</h3>
+    </a>
+    <div class="collapse" id="confirmed">
+        {% if approved_achievements %}
+        <div class="table-box">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Токен</th>
+                    <th>Название достижения</th>
+                    <th>Учебное заведение</th>
+                    <th>Файл</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for ach in approved_achievements %}
+                <tr>
+                    <td>{{ ach.token }}</td>
+                    <td>{{ ach.title }}</td>
+                    <td>{{ ach.university_title }}</td>
+                    <td>
+                        {% if ach.approve %}
+                        <audio controls>
+                            <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                            Ваш браузер не поддерживает аудио.
+                        </audio>
+                        <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank"
+                           class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
+                        {% else %}
+                        <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank"
+                           class="btn btn-outline-primary btn-sm">Открыть PDF</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            Подтвержденные достижения отсутствуют
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="alert alert-warning" role="alert">
-        Подтвержденные достижения отсутствуют
-    </div>
-    {% endif %}
 
     <br>
-    <h3>Активные курсы</h3>
-    {% if active_courses %}
-    <div class="table-box">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Название курса</th>
-                <th>Учебное заведение</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for ach in active_courses %}
-            <tr>
-                <td>{{ ach.title }}</td>
-                <td>{{ ach.university_title }}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    <a class="d-block fw-bold text-decoration-none"
+       data-bs-toggle="collapse"
+       href="#active"
+       role="button"
+       aria-expanded="false"
+       aria-controls="active">
+        <h3>Активные курсы</h3>
+    </a>
+    <div class="collapse" id="active">
+        {% if active_courses %}
+        <div class="table-box">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Название курса</th>
+                    <th>Учебное заведение</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for ach in active_courses %}
+                <tr>
+                    <td>{{ ach.title }}</td>
+                    <td>{{ ach.university_title }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            Активные курсы отсутствуют
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="alert alert-warning" role="alert">
-        Активные курсы отсутствуют
-    </div>
-    {% endif %}
 
     <br>
-    <h3>Оконченные курсы</h3>
-    {% if inactive_courses %}
-    <div class="table-box">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Токен</th>
-                <th>Название достижения</th>
-                <th>Учебное заведение</th>
-                <th>Файл</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for ach in inactive_courses %}
-            <tr>
-                <td>{{ ach.token }}</td>
-                <td>{{ ach.title }}</td>
-                <td>{{ ach.university_title }}</td>
-                <td>
-                    {% if ach.approve %}
-                    <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank"
-                       class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
-                    {% else %}
-                    <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank"
-                       class="btn btn-outline-primary btn-sm">Открыть PDF</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    <a class="d-block fw-bold text-decoration-none"
+       data-bs-toggle="collapse"
+       href="#completed"
+       role="button"
+       aria-expanded="false"
+       aria-controls="completed">
+        <h3>Оконченные курсы</h3>
+    </a>
+    <div class="collapse" id="completed">
+        {% if inactive_courses %}
+        <div class="table-box">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Токен</th>
+                    <th>Название достижения</th>
+                    <th>Учебное заведение</th>
+                    <th>Файл</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for ach in inactive_courses %}
+                <tr>
+                    <td>{{ ach.token }}</td>
+                    <td>{{ ach.title }}</td>
+                    <td>{{ ach.university_title }}</td>
+                    <td>
+                        {% if ach.approve %}
+                        <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank"
+                           class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
+                        {% else %}
+                        <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank"
+                           class="btn btn-outline-primary btn-sm">Открыть PDF</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            Оконченные курсы отсутствуют
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="alert alert-warning" role="alert">
-        Оконченные курсы отсутствуют
-    </div>
-    {% endif %}
 
 </div>
 {% endblock %}

@@ -188,3 +188,15 @@ form.invite-form.m-0 {
 .gap-2 {
     gap: 10px;
 }
+
+.upload_file {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 450px;
+    font-size: 28px;
+    background-color: #f3f3f2;
+    border: 1px solid gray;
+    border-radius: 5px;
+    text-align: center;
+    padding: 35px;
+}

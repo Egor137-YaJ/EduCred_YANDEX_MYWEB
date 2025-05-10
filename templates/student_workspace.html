@@ -1,9 +1,78 @@
-{% extends "base.html" %}
-
+{% extends "workspace_base.html" %}
 {% block content %}
-  <div class="container mt-5 p-4 bg-light rounded shadow text-center">
+<div class="container mt-5 p-4 bg-light rounded shadow text-center">
     <h2 class="text-success mb-3">🎓 Добро пожаловать в рабочее место студента!</h2>
     <h4 class="text-primary">Вход выполнен от:</h4>
     <h3 class="text-dark fw-bold">{{ joined_title }}</h3>
-  </div>
+</div>
+<br>
+<br>
+<h2 align="center">Добавить достижение</h2>
+<br>
+<div class="upload_file">
+    <form method="POST" enctype="multipart/form-data">
+        <p>{{ form.hidden_tag() }}</p>
+        <p>{{ form.name.label }}</p>
+        <p>{{ form.name}}</p>
+        <p>{{ form.audio}}</p>
+        <p>{{ form.submit(type="submit", class="btn btn-success btn-equal-height") }}</p>
+        {% for error in form.audio.errors %}
+            <div class="alert alert-danger" role="alert">
+            {{ error }}
+            </div>
+        {% endfor %}
+    </form>
+</div>
+
+<br>
+<br>
+<h2 align="center">Ваши достижения</h2>
+<div class="container">
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for message in messages %}
+        <div class="alert alert-warning">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% if achievements %}
+    <div class="table-box">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Токен</th>
+                <th>Название достижения</th>
+                <th>Учебное заведение</th>
+                <th>Файл</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for ach in achievements %}
+            <tr>
+                <td>{{ ach.token }}</td>
+                <td>{{ ach.description }}</td>
+                <td>{{ ach.university_title }}</td>
+                <td>
+                    {% if ach.university_title %}
+                    <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank"
+                       class="btn btn-outline-primary btn-sm">Открыть PDF</a>
+                    {% else %}
+                    <audio controls>
+                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                        Ваш браузер не поддерживает аудио.
+                    </audio>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+</div>
 {% endblock %}

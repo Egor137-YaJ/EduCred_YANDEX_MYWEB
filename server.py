@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, redirect, url_for, session, flash
+from flask import Flask, render_template, redirect, url_for, session, flash, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash
 
@@ -35,11 +35,42 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
-@app.route('/home')
-@app.route('/')
+@app.route('/home', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def home():
     logout_user()
-    return render_template('home.html', title='Home Page', style=url_for('static', filename='css/style.css'))
+    try:
+        db_sess = db_session.create_session()
+        token = None
+        achievement = None
+        university = None
+
+        if request.method == 'POST':
+            token = request.form.get('token', '').strip()
+            if not token:
+                flash('Введите токен достижения', 'warning')
+            else:
+                achievement = db_sess.query(Achievement).filter_by(token=token).first()
+                if not achievement:
+                    message_type = 'not_found'
+                    flash(f'Достижение с токеном «{token}» не найдено.', 'danger')
+                else:
+                    if achievement.end_date is None:
+                        flash(
+                            f'{achievement.student.student_nsp} проходит курс «{achievement.title}»'
+                            ', но ещё не окончил(а).', 'info')
+                    university = db_sess.query(University).filter_by(id=achievement.university_id).first()
+
+        return render_template(
+            'home.html',
+            token=token,
+            achievement=achievement,
+            university=university
+        )
+    except Exception as e:
+        flash(f'Произошла непредвиденная ошибка, попробуйте ещё раз', 'danger')
+        app.logger.error(e)
+        return render_template('home.html', token=None, result=None, university=None)
 
 
 @app.route('/register_university', methods=['GET', 'POST'])
@@ -402,7 +433,7 @@ def profile():
             flash('Профиль успешно обновлён', 'success')
         except Exception as e:
             db_sess.rollback()
-            flash('Ошибка при сохранении: ' + str(e), 'danger')
+            app.logger.error('An error occurred: %s', e)
         return redirect(url_for('profile'))
     form.email.data = user.email
 

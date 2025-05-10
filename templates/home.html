@@ -2,9 +2,59 @@
 
 
 {% block content %}
-<br><h1>Добро пожаловать</h1>
-<br><h3><a href={{url_for('login')}}>Вход</a></h3>
-<h3><a href={{url_for('register_university')}}>Регистрация Образовательного учреждения</a></h3>
-<h3><a href={{url_for('register_employer')}}>Регистрация Работодателя</a></h3>
-<h3><a href={{url_for('register_student')}}>Регистрация Студента</a></h3>
+<div class="container py-5">
+    <form method="POST" class="input-group mb-4">
+        <input
+                type="text"
+                name="token"
+                class="form-control"
+                placeholder="Введите токен достижения"
+                value="{{ token or '' }}"
+                required
+        />
+        <button class="btn btn-primary">Проверить</button>
+    </form>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, msg in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+    </div>
+    {% endfor %}
+
+    {% elif achievement %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ achievement.student.student_nsp }}</h5>
+            <p class="mb-1">
+                <strong>Курс:</strong> {{ achievement.title }}
+            </p>
+            <p class="mb-1">
+                <strong>Организация:</strong> {{ university.title }}
+            </p>
+            <p class="mb-1">
+                <strong>Дата прохождения:</strong>
+                {{ achievement.start_date.strftime('%d.%m.%Y') }}
+                — {{ achievement.end_date.strftime('%d.%m.%Y') }}
+            </p>
+            <p class="mb-1">
+                <strong>Кем выдано:</strong> {{ university.boss_nsp }}
+            </p>
+            <p class="mb-1">
+                <strong>Оценка:</strong> {{ achievement.grade or '—' }}
+            </p>
+            <p class="mb-3">
+                <strong>Токен:</strong> {{ achievement.token }}
+            </p>
+            <a href=""
+               class="btn btn-success">
+                Открыть сертификат
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+</div>
 {% endblock %}

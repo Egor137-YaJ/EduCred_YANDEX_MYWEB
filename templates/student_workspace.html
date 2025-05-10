@@ -15,6 +15,8 @@
         <p>{{ form.name.label }}</p>
         <p>{{ form.name}}</p>
         <p>{{ form.audio}}</p>
+        <p>{{ form.univer_title.label }}</p>
+        <p>{{ form.univer_title }}</p>
         <p>{{ form.submit(type="submit", class="btn btn-success btn-equal-height") }}</p>
         {% for error in form.audio.errors %}
             <div class="alert alert-danger" role="alert">
@@ -43,32 +45,32 @@
     <div class="table-box">
         <table class="table table-striped">
             <thead>
-            <tr>
-                <th>Токен</th>
-                <th>Название достижения</th>
-                <th>Учебное заведение</th>
-                <th>Файл</th>
-            </tr>
+                <tr>
+                    <th>Токен</th>
+                    <th>Название достижения</th>
+                    <th>Учебное заведение</th>
+                    <th>Файл</th>
+                </tr>
             </thead>
             <tbody>
-            {% for ach in achievements %}
-            <tr>
-                <td>{{ ach.token }}</td>
-                <td>{{ ach.description }}</td>
-                <td>{{ ach.university_title }}</td>
-                <td>
-                    {% if ach.university_title %}
-                    <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank"
-                       class="btn btn-outline-primary btn-sm">Открыть PDF</a>
-                    {% else %}
-                    <audio controls>
-                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                        Ваш браузер не поддерживает аудио.
-                    </audio>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
+                {% for ach in achievements %}
+                <tr>
+                    <td>{{ ach.token }}</td>
+                    <td>{{ ach.title }}</td>
+                    <td>{{ ach.university_title }}</td>
+                    <td>
+                        {% if ach.approve %}
+                            <audio controls>
+                                <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                                Ваш браузер не поддерживает аудио.
+                            </audio>
+                            <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank" class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
+                        {% else %}
+                            <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Открыть PDF</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

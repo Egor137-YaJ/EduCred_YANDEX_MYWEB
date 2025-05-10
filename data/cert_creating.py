@@ -26,7 +26,7 @@ def pdf_creating(student_nsp, course_title, univer_title, start_date, end_date, 
     clean_course = course_title.replace(' ', '_')
     filename_only = f"cert_{hash_name(clean_student, clean_course, univer_title)}.pdf"
     full_path = os.path.join('static/achievements', filename_only)
-    short_path = os.path.join('achievements', filename_only)
+    short_path = os.path.join('achievements', filename_only).replace('\\', '/')
 
     pdfmetrics.registerFont(TTFont('DejaVuSans', 'static/fonts/DejaVuSans.ttf'))
     pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'static/fonts/DejaVuSans-Bold.ttf'))

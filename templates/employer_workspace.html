@@ -51,7 +51,7 @@
                         <td>{{ ach.title }}</td>
                         <td>{{ ach.university_title }}</td>
                         <td>
-                            {% if ach.approve %}
+                            {% if ach.approve != 'Not Required' %}
                                 <audio controls>
                                     <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
                                     Ваш браузер не поддерживает аудио.

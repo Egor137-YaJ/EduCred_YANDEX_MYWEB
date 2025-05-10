@@ -250,9 +250,13 @@ def university_workspace():
     form_close = UniverCloseCourseForm()
     courses = []
     student_find_table = ''
-    projs = db_sess.query(Achievement).filter(Achievement.university_id == univer.id).all()
+    projs = db_sess.query(Achievement).filter(Achievement.university_id == univer.id,
+                                              or_(Achievement.end_date == None,
+                                                  Achievement.end_date == ""),
+                                              Achievement.approve_path == None
+                                              ).all()
 
-    if form_find.is_submitted() and not form_find.validate():
+    if form_find.validate_on_submit():
         if form_find.find_submit.data:
             student_id = str(form_find.find_student_id.data)
             if not student_id.isdigit():
@@ -268,7 +272,7 @@ def university_workspace():
                 Achievement.end_date == "")
             ).all()
 
-    elif form_open.validate_on_submit():
+    if form_open.validate_on_submit():
         if form_open.open_submit.data:
             student_id = str(form_open.open_student_id.data)
             if not student_id.isdigit():
@@ -279,14 +283,15 @@ def university_workspace():
                 title=str(form_open.open_course_title.data),
                 start_date=datetime.datetime.now(),
                 student_id=student_id,
-                university_id=univer.id
+                university_id=univer.id,
+                approve_path='Not Required'
             )
             db_sess.add(new_ach)
             db_sess.commit()
             flash(f"Курс для студента с ID {student_id} открыт успешно, удачи!", "success")
             return redirect(url_for('university_workspace'))
 
-    elif form_close.validate_on_submit():
+    if form_close.validate_on_submit():
         if form_close.close_submit.data:
             student_id = str(form_close.close_student_id.data)
             if not student_id.isdigit():
@@ -300,7 +305,8 @@ def university_workspace():
                 or_(Achievement.end_date == None,
                     Achievement.end_date == ""),
                 Achievement.university_id == univer.id,
-                Achievement.student_id == student_id
+                Achievement.student_id == student_id,
+                Achievement.approve_path == 'Not Required'
             ).first()
             if found_course:
                 token = tokenize()
@@ -349,7 +355,7 @@ def manage_proj():
         token = tokenize()
         proj.token = token
         proj.end_date = datetime.datetime.now()
-        proj.approve_own = pdf_creating(student_nsp=proj.student.student_nsp,
+        proj.approve_path = pdf_creating(student_nsp=proj.student.student_nsp,
                                         course_title=proj.title,
                                         univer_title=proj.university.title,
                                         start_date=proj.start_date,
@@ -358,6 +364,7 @@ def manage_proj():
                                         token=proj.token,
                                         mark="approved",
                                         type="proj")
+        db_sess.commit()
         flash("Проект подтверждён, сертификат подтверждения добавлен!", "success")
 
     return redirect(url_for('university_workspace'))
@@ -442,23 +449,31 @@ def student_workspace():
     user = db_sess.query(User).get(current_user.id)
     student = user.student
     form = UploadMusicForm()
+
+    univers = db_sess.query(University).all()
+    form.univer_title.choices = [(u.title, u.title) for u in univers]
     if form.validate_on_submit():
         ach = form.audio.data
-        # token, path = upload_tokened_ach(ach)
         ach.save(os.path.join('static/achievements', f'{form.name.data}.mp3'))
+        short_path = os.path.join('achievements', f'{form.name.data}.mp3')
+        chosen_univer = db_sess.query(University).filter(University.title == form.univer_title.data).first()
         achievement = Achievement(
-            # token = token,
-            # file_path = path,
-            file_path=f'achievements/{form.name.data}.mp3',
+            file_path=short_path,
             title=form.name.data,
-            student_id=student.id)
+            start_date=datetime.datetime.now(),
+            student_id=student.id,
+            university_id=chosen_univer.id
+        )
         db_sess.add(achievement)
         db_sess.commit()
         return redirect(url_for('student_workspace'))
 
     student_fullname = student.student_nsp.strip()
     achievements = db_sess.query(Achievement).filter(
-        Achievement.student_id == student.id).all()
+        Achievement.student_id == student.id,
+        Achievement.end_date.isnot(None),
+        Achievement.end_date != ""
+    ).all()
 
     if not achievements:
         flash("У студента нет достижений.", "warning")
@@ -467,10 +482,11 @@ def student_workspace():
             university = db_sess.query(University).filter(University.id == a.university_id).first()
             achievements_data.append({
                 'token': a.token,
-                'description': a.title,
+                'title': a.title,
                 'university_title': university.title if university else "",
                 'student_id': student.id,
-                'file_path': a.file_path
+                'file_path': a.file_path,
+                'approve': a.approve_path
             })
         session['student_id_current'] = student.id
     return render_template('student_workspace.html',
@@ -483,6 +499,7 @@ def main():
     db_session.global_init("db/EduCred_data.db")
     port = int(os.environ.get("PORT", 8000))
     app.run(host='0.0.0.0', port=port)
+
 
 if __name__ == '__main__':
     main()

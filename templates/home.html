@@ -49,7 +49,9 @@
             </p>
             <div class="d-flex align-items-center gap-3">
                 {% if achievement.approve_path != 'Not Required' %}
-                <a href="{{ url_for('static', filename=achievement.approve) }}" target="_blank" class="btn btn-success">
+                <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.approve_path.split('/')[1] }}"
+                   target="_blank"
+                   class="btn btn-success">
                     Открыть сертификат
                 </a>
                 <audio controls>
@@ -57,7 +59,8 @@
                     Ваш браузер не поддерживает аудио.
                 </audio>
                 {% else %}
-                <a href="{{ url_for('static', filename=achievement.file_path) }}" target="_blank"
+                <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.file_path.split('/')[1] }}"
+                   target="_blank"
                    class="btn btn-success">
                     Открыть сертификат
                 </a>

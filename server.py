@@ -1,6 +1,6 @@
 import datetime
 import os
-from flask import Flask, render_template, redirect, url_for, session, flash, request, abort
+from flask import Flask, render_template, redirect, url_for, session, flash, request, abort, send_from_directory
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from sqlalchemy import or_
 from sqlalchemy.testing import not_in
@@ -626,6 +626,13 @@ def profile():
 
     return render_template('profile.html', form=form, role=user.role, title='Личный кабинет', user=user,
                            style=url_for('static', filename='css/style.css'), born=born)
+
+
+@app.route("/check/certificate/<title>/<file_name>")
+def certificate(title, file_name):
+    workingdir = os.path.abspath(os.getcwd())
+    filepath = workingdir + '/static/achievements/'
+    return send_from_directory(filepath, file_name, download_name=f'certificate_{title}.pdf')
 
 
 @app.route('/workspace')

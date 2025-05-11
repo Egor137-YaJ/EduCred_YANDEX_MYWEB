@@ -40,14 +40,14 @@
         <h3>{{ form.name.label }}</h3>
         <p>{{ form.name(class="form-control", placeholder="Введите наименование достижения") }}</p>
 
-        <h3>Композиция</h3>
-        <p>{{ form.audio()}}</p>
+        <h3>Файл достижения</h3>
+        <p>{{ form.file()}}</p>
 
         <h3>{{ form.univer_title.label }}</h3>
         <p>{{ form.univer_title(class="form-control") }}</p>
 
         <p>{{ form.submit(class="btn btn-primary mb-2") }}</p>
-        {% for error in form.audio.errors %}
+        {% for error in form.file.errors %}
         <div class="alert alert-danger" role="alert">
             {{ error }}
         </div>
@@ -82,10 +82,15 @@
                     <td>{{ ach.title }}</td>
                     <td>{{ ach.university_title }}</td>
                     <td>
-                        <audio controls>
-                            <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                            Ваш браузер не поддерживает аудио.
-                        </audio>
+                        {% set ext = ach.file_path.split('.')[-1].lower() %}
+                        {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
+                            <audio controls>
+                                <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/{{ ext }}">
+                                Ваш браузер не поддерживает аудио.
+                            </audio>
+                        {% else %}
+                            <a href="{{ url_for('static', filename=ach.file_path) }}" download class="btn btn-outline-primary btn-sm">Скачать файл</a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -127,17 +132,17 @@
                     <td>{{ ach.title }}</td>
                     <td>{{ ach.university_title }}</td>
                     <td>
-                        {% if ach.approve %}
-                        <audio controls>
-                            <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                            Ваш браузер не поддерживает аудио.
-                        </audio>
-                        <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank"
-                           class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
+                        {% set ext = ach.file_path.split('.')[-1].lower() %}
+                        {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
+                            <audio controls>
+                                <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/{{ ext }}">
+                                Ваш браузер не поддерживает аудио.
+                            </audio>
                         {% else %}
-                        <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank"
-                           class="btn btn-outline-primary btn-sm">Открыть PDF</a>
+                            <a href="{{ url_for('static', filename=ach.file_path) }}" download class="btn btn-outline-primary btn-sm">Скачать файл</a>
                         {% endif %}
+                        <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank"
+                            class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -215,13 +220,8 @@
                     <td>{{ ach.title }}</td>
                     <td>{{ ach.university_title }}</td>
                     <td>
-                        {% if ach.approve %}
-                        <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank"
-                           class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
-                        {% else %}
                         <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank"
                            class="btn btn-outline-primary btn-sm">Открыть PDF</a>
-                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

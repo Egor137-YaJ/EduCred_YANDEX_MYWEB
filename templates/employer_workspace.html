@@ -42,6 +42,7 @@
                         <th>Название достижения</th>
                         <th>Учебное заведение</th>
                         <th>Файл</th>
+                        <th>Оценка</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,15 +53,21 @@
                         <td>{{ ach.university_title }}</td>
                         <td>
                             {% if ach.approve != 'Not Required' %}
-                                <audio controls>
-                                    <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                                    Ваш браузер не поддерживает аудио.
-                                </audio>
+                                {% set ext = ach.file_path.split('.')[-1].lower() %}
+                                {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
+                                    <audio controls>
+                                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/{{ ext }}">
+                                        Ваш браузер не поддерживает аудио.
+                                    </audio>
+                                {% else %}
+                                    <a href="{{ url_for('static', filename=ach.file_path) }}" download class="btn btn-outline-primary btn-sm">Скачать файл</a>
+                                {% endif %}
                                 <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank" class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
                             {% else %}
                                 <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Открыть PDF</a>
                             {% endif %}
                         </td>
+                        <td>{{ ach.mark }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

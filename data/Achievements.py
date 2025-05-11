@@ -17,6 +17,7 @@ class Achievement(SqlAlchemyBase, UserMixin, SerializerMixin):
     title = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     start_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.now())
     end_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True)
+    mark = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     student_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("students.id"))
     university_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("universities.id"))
 

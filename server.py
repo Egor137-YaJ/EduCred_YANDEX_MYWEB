@@ -601,6 +601,7 @@ def student_workspace():
     return render_template('student_workspace.html',
                            form=form,
                            joined_title=student_fullname,
+                           student_id=student.id,
                            approved_achievements=approved_achievements_data,
                            nonapproved_achievements=nonapproved_achievements_data,
                            active_courses=active_courses_data,

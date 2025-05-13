@@ -40,7 +40,7 @@ def pdf_creating(student_nsp, course_title, univer_title, start_date, end_date, 
     c.setFont("DejaVuSans", 14)
     if type != 'course':
         c.drawCentredString(width / 2, height / 2 + 2.5 * cm,
-                            f"{student_nsp} успешно сдал проект")
+                            f"{student_nsp} подтвердил достижение")
     else:
         c.drawCentredString(width / 2, height / 2 + 2.5 * cm,
                             f"{student_nsp} успешно завершил(а) курс")

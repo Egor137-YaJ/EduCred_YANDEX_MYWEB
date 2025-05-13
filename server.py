@@ -476,6 +476,7 @@ def student_workspace():
     nonapproved_achievements_data = []
     active_courses_data = []
     inactive_courses_data = []
+    employers_ids = []
     employers_data = []
     student_fullname = student.student_nsp.strip()
 
@@ -497,7 +498,8 @@ def student_workspace():
         db_sess.commit()
         return redirect(url_for('student_workspace'))
 
-    employers_ids = list(map(int, student.employer_id.split(';')))
+    if student.employer_id:
+        employers_ids = list(map(int, student.employer_id.split(';')))
 
     employers = db_sess.query(Employer).filter(
         Employer.id.in_(employers_ids)

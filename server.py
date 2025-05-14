@@ -1,10 +1,14 @@
 import datetime
 import os
+import random
+
 from flask import Flask, render_template, redirect, url_for, session, flash, request, abort
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from sqlalchemy import or_
 from sqlalchemy.testing import not_in
 from werkzeug.security import generate_password_hash
+from wtforms.validators import DataRequired
+from wtforms import PasswordField
 
 from data import db_session
 from data.employer_find_student_form import EmplStudentSearchForm
@@ -17,7 +21,7 @@ from data.reg_Employer import RegisterEmployerForm
 from data.login_form import LoginForm
 from data.Users import User
 from data.Students import Student
-from data.upload_music_form import UploadMusicForm
+from data.upload_project_form import UploadProjectForm
 from data.Universities import University
 from data.Employers import Employer
 from data.Achievements import Achievement
@@ -58,7 +62,6 @@ def home():
             else:
                 achievement = db_sess.query(Achievement).filter_by(token=token).first()
                 if not achievement:
-                    message_type = 'not_found'
                     flash(f'Достижение с токеном «{token}» не найдено.', 'danger')
                 else:
                     if achievement.end_date is None:
@@ -269,10 +272,12 @@ def university_workspace():
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     univer = user.university
+
     form_find = UniverFindStudentForm()
     form_open = UniverOpenCourseForm()
     form_close = UniverCloseCourseForm()
-    courses = []
+
+    all_acts = []
     student_find_table = ''
     projs = db_sess.query(Achievement).filter(Achievement.university_id == univer.id,
                                               or_(Achievement.end_date == None,
@@ -280,50 +285,56 @@ def university_workspace():
                                               Achievement.approve_path == None
                                               ).all()
 
-    if form_find.validate_on_submit():
-        if form_find.find_submit.data:
-            student_id = str(form_find.find_student_id.data)
-            if not student_id.isdigit():
-                flash('ID студента, которого вы хотите найти, должен состоять только из цифр', "warning")
+    if form_find.validate_on_submit() and form_find.find_submit.data:
+        student_id = str(form_find.find_student_id.data)
+        if not student_id.isdigit():
+            flash('ID студента, которого вы хотите найти, должен состоять только из цифр', "warning")
+        else:
             student_id = int(student_id)
-            db_sess = db_session.create_session()
             student_find_table = db_sess.query(Student).filter(Student.id == student_id).first()
             if not student_find_table:
                 flash("Неверное ID студента для поиска", "warning")
-            courses = db_sess.query(Achievement).filter(
-                Achievement.student_id == student_id,
-                or_(Achievement.end_date == None,
-                    Achievement.end_date == "")
-            ).all()
+            else:
+                all_acts = db_sess.query(Achievement).filter(
+                    Achievement.student_id == student_id,
+                    or_(Achievement.end_date == None,
+                        Achievement.end_date == "")
+                ).all()
+                session['univer_found_student_id_cur'] = student_id
 
-    if form_open.validate_on_submit():
-        if form_open.open_submit.data:
-            student_id = str(form_open.open_student_id.data)
-            if not student_id.isdigit():
-                flash('ID студента, которому вы хотите открыть курс, должен состоять только из цифр', "warning")
+    if form_find.find_clear.data:
+        session.pop('univer_found_student_id_cur', None)
+        form_find.find_student_id.data = ''
+
+    if form_open.validate_on_submit() and form_open.open_submit.data:
+        student_id = str(form_open.open_student_id.data)
+        if not student_id.isdigit():
+            flash('ID студента, которому вы хотите открыть курс, должен состоять только из цифр', "warning")
+        else:
             student_id = int(student_id)
-            db_sess = db_session.create_session()
-            new_ach = Achievement(
-                title=str(form_open.open_course_title.data),
-                start_date=datetime.datetime.now(),
-                student_id=student_id,
-                university_id=univer.id,
-                approve_path='Not Required'
-            )
-            db_sess.add(new_ach)
-            db_sess.commit()
-            flash(f"Курс для студента с ID {student_id} открыт успешно, удачи!", "success")
-            return redirect(url_for('university_workspace'))
+            if db_sess.query(Student).get(student_id):
+                new_ach = Achievement(
+                    title=str(form_open.open_course_title.data),
+                    start_date=datetime.datetime.now(),
+                    mark=random.choice([3, 4, 5]),
+                    student_id=student_id,
+                    university_id=univer.id,
+                    approve_path='Not Required'
+                )
+                db_sess.add(new_ach)
+                db_sess.commit()
+                flash(f"Курс для студента с ID {student_id} открыт успешно, удачи!", "success")
+                return redirect(url_for('university_workspace'))
+            else:
+                flash("Студент с таким ID не существует", "warning")
 
-    if form_close.validate_on_submit():
-        if form_close.close_submit.data:
-            student_id = str(form_close.close_student_id.data)
-            if not student_id.isdigit():
-                flash('ID студента, которому вы хотите завершить курс, должен состоять только из цифр', "warning")
+    if form_close.validate_on_submit() and form_close.close_submit.data:
+        student_id = str(form_close.close_student_id.data)
+        if not student_id.isdigit():
+            flash('ID студента, которому вы хотите завершить курс, должен состоять только из цифр', "warning")
+        else:
             student_id = int(student_id)
-
-            got_title = str(form_close.close_course_title.data)
-            db_sess = db_session.create_session()
+            got_title = form_close.close_course_title.data
             found_course = db_sess.query(Achievement).filter(
                 Achievement.title == got_title,
                 or_(Achievement.end_date == None,
@@ -342,6 +353,7 @@ def university_workspace():
                                          start_date=found_course.start_date,
                                          end_date=found_course.end_date,
                                          univer_boss=univer.boss_nsp,
+                                         mark=found_course.mark,
                                          token=token)
                 found_course.file_path = file_path
                 db_sess.commit()
@@ -350,10 +362,20 @@ def university_workspace():
             else:
                 flash("Неверные данные для закрытия курса", "warning")
 
+    if not student_find_table and 'univer_found_student_id_cur' in session:
+        saved_id = session['univer_found_student_id_cur']
+        student_find_table = db_sess.query(Student).get(saved_id)
+        all_acts = db_sess.query(Achievement).filter(
+            Achievement.student_id == saved_id,
+            or_(Achievement.end_date == None,
+                Achievement.end_date == "")
+        ).all()
+        form_find.find_student_id.data = str(saved_id)
+
     return render_template('university_workspace.html',
                            form_find=form_find, form_close=form_close, form_open=form_open,
                            student_find=student_find_table,
-                           courses=courses,
+                           activities=all_acts,
                            projs=projs,
                            joined_title=univer.title,
                            style=url_for('static', filename='css/style.css'))
@@ -379,6 +401,7 @@ def manage_proj():
         token = tokenize()
         proj.token = token
         proj.end_date = datetime.datetime.now()
+        mark = "approved"
         proj.approve_path = pdf_creating(student_nsp=proj.student.student_nsp,
                                          course_title=proj.title,
                                          univer_title=proj.university.title,
@@ -386,8 +409,9 @@ def manage_proj():
                                          end_date=proj.end_date,
                                          univer_boss=proj.university.boss_nsp,
                                          token=proj.token,
-                                         mark="approved",
+                                         mark=mark,
                                          type="proj")
+        proj.mark = mark
         db_sess.commit()
         flash("Проект подтверждён, сертификат подтверждения добавлен!", "success")
 
@@ -397,6 +421,7 @@ def manage_proj():
 @app.route('/employer_workspace', methods=['GET', 'POST'])
 @login_required
 def employer_workspace():
+    students = []
     achievements_data = []
     student_fullname = None
     form = EmplStudentSearchForm()
@@ -404,6 +429,20 @@ def employer_workspace():
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     employer = user.employer
+
+    all_students = db_sess.query(Student).all()
+    for student in all_students:
+        cur_student_achs = db_sess.query(Achievement).filter(
+            Achievement.student_id == student.id,
+            Achievement.end_date.isnot(None),
+            Achievement.end_date != ""
+        ).all()
+        if cur_student_achs:
+            students.append({
+                'id': student.id,
+                'nsp': student.student_nsp,
+                'achievement_title': ', '.join([f'"{ach.title}"' for ach in cur_student_achs])
+            })
 
     if form.validate_on_submit():
         if form.clear.data:
@@ -434,7 +473,8 @@ def employer_workspace():
                             'university_title': university.title if university else "",
                             'student_id': student.id,
                             'file_path': a.file_path,
-                            'approve': a.approve_path
+                            'approve': a.approve_path,
+                            'mark': a.mark
                         })
                     session['student_id_current'] = student.id
                     session['entered_student_id_current'] = entered_student_id
@@ -458,6 +498,7 @@ def employer_workspace():
 
     return render_template("employer_workspace.html",
                            form=form,
+                           students=students,
                            achievements=achievements_data,
                            joined_title=employer.title,
                            entered_id="" if not form.student_id.data or form.clear.data else entered_student_id,
@@ -471,7 +512,7 @@ def student_workspace():
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     student = user.student
-    form = UploadMusicForm()
+    form = UploadProjectForm()
     approved_achievements_data = []
     nonapproved_achievements_data = []
     active_courses_data = []
@@ -483,9 +524,10 @@ def student_workspace():
     univers = db_sess.query(University).all()
     form.univer_title.choices = [(u.title, u.title) for u in univers]
     if form.validate_on_submit():
-        ach = form.audio.data
-        ach.save(os.path.join('static', 'achievements', f'{form.name.data}.mp3'))
-        short_path = f'achievements/{form.name.data}.mp3'
+        ach = form.file.data
+        _, ext = os.path.splitext(form.file.data.filename)
+        ach.save(os.path.join('static', 'achievements', f'{form.name.data}{ext}'))
+        short_path = f'achievements/{form.name.data}{ext}'
         chosen_univer = db_sess.query(University).filter(University.title == form.univer_title.data).first()
         achievement = Achievement(
             file_path=short_path,
@@ -579,6 +621,7 @@ def student_workspace():
     return render_template('student_workspace.html',
                            form=form,
                            joined_title=student_fullname,
+                           student_id=student.id,
                            approved_achievements=approved_achievements_data,
                            nonapproved_achievements=nonapproved_achievements_data,
                            active_courses=active_courses_data,
@@ -614,9 +657,14 @@ def profile():
         form.populate_obj(profile)
         if user.role == 'university':
             profile.type = dict(form.type.choices).get(form.type.data)
-        pw = form.password.data
-        if pw:
-            user.set_password(pw)
+
+        cur_pw = form.current_password.data
+        new_pw = form.new_password.data
+        if new_pw:
+            if not cur_pw or not user.check_password(cur_pw):
+                flash('Текущий пароль введён неверно', 'danger')
+                return redirect(url_for('profile'))
+            user.set_password(new_pw)
         try:
             db_sess.commit()
             flash('Профиль успешно обновлён', 'success')

@@ -15,6 +15,7 @@
         {{ form_find.hidden_tag() }}
         {{ form_find.find_student_id(class_="form-control", id="find_student_id", placeholder="ID студента") }}
         {{ form_find.find_submit(class_="btn btn-outline-primary") }}
+        {{ form_find.find_clear(class_="btn btn-danger btn-equal-height") }}
     </form>
 
     {% if student_find %}
@@ -28,19 +29,27 @@
         <table class="table table-bordered">
             <thead class="table-light">
             <tr>
-                <th>Название курса</th>
+                <th>Название деятельности</th>
+                <th>Тип деятельности</th>
                 <th>Название Учреждения</th>
                 <th>Дата начала</th>
                 <th>Оценка</th>
             </tr>
             </thead>
             <tbody>
-            {% for course in courses %}
+            {% for act in activities %}
                 <tr>
-                    <td>{{ course.title }}</td>
-                    <td>{{ course.university.title }}</td>
-                    <td>{{ course.start_date.strftime("%d.%m.%Y") }}</td>
-                    <td>{{ course.grade or '—' }}</td>
+                    <td>{{ act.title }}</td>
+                    <td>
+                        {% if act.approve_path == "Not Required" %}
+                            Курс
+                        {% else %}
+                            Личный проект
+                        {% endif %}
+                    </td>
+                    <td>{{ act.university.title }}</td>
+                    <td>{{ act.start_date.strftime("%d.%m.%Y") }}</td>
+                    <td>{{ act.mark or '—' }}</td>
                 </tr>
             {% else %}
                 {% if student_find %}
@@ -110,10 +119,15 @@
                     <td>{{ proj.title }}</td>
                     <td>{{ proj.start_date.strftime("%d.%m.%Y") }}</td>
                     <td>
-                        <audio controls>
-                                        <source src="{{ url_for('static', filename=proj.file_path) }}" type="audio/mpeg">
-                                        Ваш браузер не поддерживает аудио.
-                        </audio>
+                        {% set ext = proj.file_path.split('.')[-1].lower() %}
+                        {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
+                            <audio controls>
+                                <source src="{{ url_for('static', filename=proj.file_path) }}" type="audio/{{ ext }}">
+                                Ваш браузер не поддерживает аудио.
+                            </audio>
+                        {% else %}
+                            <a href="{{ url_for('static', filename=proj.file_path) }}" download class="btn btn-outline-primary btn-sm">Скачать файл</a>
+                        {% endif %}
                     </td>
                     <td>
                         <form method="POST" action="{{ url_for('manage_proj') }}" style="display:inline;">

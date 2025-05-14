@@ -13,6 +13,37 @@
         {% endif %}
     {% endwith %}
 
+    <a class="d-block fw-bold text-decoration-none"
+       data-bs-toggle="collapse"
+       href="#confirmed"
+       role="button"
+       aria-expanded="false"
+       aria-controls="confirmed">
+        <h3>Таблица всех студентов системы</h3>
+    </a>
+    <div class="collapse" id="confirmed">
+        <div class="table-box">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Id студента</th>
+                        <th>ФИО студента</th>
+                        <th>Наименование достижений студента</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.id }}</td>
+                        <td>{{ student.nsp }}</td>
+                        <td>{{ student.achievement_title }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="student_search_block">
         <form method="post" class="student_search_form">
             <p>{{ form.hidden_tag() }}</p>
@@ -42,6 +73,7 @@
                         <th>Название достижения</th>
                         <th>Учебное заведение</th>
                         <th>Файл</th>
+                        <th>Оценка</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,15 +84,21 @@
                         <td>{{ ach.university_title }}</td>
                         <td>
                             {% if ach.approve != 'Not Required' %}
-                                <audio controls>
-                                    <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
-                                    Ваш браузер не поддерживает аудио.
-                                </audio>
+                                {% set ext = ach.file_path.split('.')[-1].lower() %}
+                                {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
+                                    <audio controls>
+                                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/{{ ext }}">
+                                        Ваш браузер не поддерживает аудио.
+                                    </audio>
+                                {% else %}
+                                    <a href="{{ url_for('static', filename=ach.file_path) }}" download class="btn btn-outline-primary btn-sm">Скачать файл</a>
+                                {% endif %}
                                 <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank" class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
                             {% else %}
                                 <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Открыть PDF</a>
                             {% endif %}
                         </td>
+                        <td>{{ ach.mark }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

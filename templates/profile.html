@@ -45,7 +45,7 @@
                     {% if field.name != 'born' %}
                     {{ field(class_="form-control") }}
                     {% else %}
-                    <input class="form-control" id="born" name="born" readonly required type="text"
+                    <input class="form-control" id="born" name="born" required type="text"
                            value="{{ born }}">
                     {% endif %}
                     {% if field.errors %}
@@ -62,7 +62,7 @@
             </div>
         </form>
     </div>
-
+</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

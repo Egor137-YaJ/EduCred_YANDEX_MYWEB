@@ -1,9 +1,12 @@
 import datetime
 import os
 import random
-from flask import Flask, render_template, redirect, url_for, session, flash, request, abort, send_from_directory
+from flask import Flask, render_template, redirect, url_for, session, flash, request, abort, send_from_directory, \
+    send_file
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from sqlalchemy import or_
+from werkzeug.utils import secure_filename
+
 from data import db_session
 from data.employer_find_student_form import EmplStudentSearchForm
 from data.univer_find_student_form import UniverFindStudentForm
@@ -677,6 +680,22 @@ def certificate(title, file_name):
     workingdir = os.path.abspath(os.getcwd())
     filepath = workingdir + '/static/achievements/'
     return send_from_directory(filepath, file_name, download_name=f'certificate_{title}.pdf')
+
+
+@app.route("/download/achievement/<title>/<filename>")
+def download_ach(title, filename):
+    db_sess = db_session.create_session()
+    rel_path = f"achievements/{filename}"
+    abs_path = os.path.join(app.root_path, 'static', rel_path)
+    if not os.path.isfile(abs_path):
+        abort(404)
+    achievement = db_sess.query(Achievement).filter_by(file_path=rel_path).first()
+    if not achievement or not achievement.student:
+        abort(404)
+    ext = os.path.splitext(abs_path)[1]
+    download_name = f"{title}_{achievement.student.student_nsp}{ext}"
+
+    return send_file(abs_path, as_attachment=True, download_name=download_name)
 
 
 @app.route('/workspace')

@@ -49,21 +49,31 @@
             </p>
             <div class="d-flex align-items-center gap-3">
                 {% if achievement.approve_path != 'Not Required' %}
-                <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.approve_path.split('/')[1] }}"
-                   target="_blank"
-                   class="btn btn-success">
-                    Открыть сертификат
-                </a>
-                <audio controls>
-                    <source src="{{ url_for('static', filename=achievement.file_path) }}" type="audio/mpeg">
-                    Ваш браузер не поддерживает аудио.
-                </audio>
+                    <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.approve_path.split('/')[1] }}"
+                       target="_blank"
+                       class="btn btn-success">
+                        Открыть сертификат подтверждения
+                    </a>
+                    {% set ext = achievement.file_path.split('.')[-1].lower() %}
+                    {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
+                        <audio controls>
+                            <source src="{{ url_for('static', filename=achievement.file_path) }}" type="audio/mpeg">
+                            Ваш браузер не поддерживает аудио.
+                        </audio>
+                    {% else %}
+                        <a href="{{ url_for('download_ach',
+                                            title=achievement.title,
+                                            filename=achievement.file_path.split('/')[-1]) }}"
+                           class="btn btn-outline-primary btn-sm">
+                            Скачать файл достижения
+                        </a>
+                    {% endif %}
                 {% else %}
-                <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.file_path.split('/')[1] }}"
-                   target="_blank"
-                   class="btn btn-success">
-                    Открыть сертификат
-                </a>
+                    <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.file_path.split('/')[1] }}"
+                       target="_blank"
+                       class="btn btn-success">
+                        Открыть сертификат
+                    </a>
                 {% endif %}
             </div>
         </div>

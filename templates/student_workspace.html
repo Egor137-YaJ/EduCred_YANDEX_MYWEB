@@ -140,7 +140,7 @@
                                 Ваш браузер не поддерживает аудио.
                             </audio>
                         {% else %}
-                            <a href="{{ url_for('static', filename=ach.file_path) }}" download class="btn btn-outline-primary btn-sm">Скачать файл</a>
+                            <a href="{{ url_for('static', filename=ach.file_path) }}" download="{{ ach.title }}_{{ ach.student_nsp }}.{{ ext }}" class="btn btn-outline-primary btn-sm">Скачать файл</a>
                         {% endif %}
                         <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank"
                             class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>

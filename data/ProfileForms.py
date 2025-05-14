@@ -17,8 +17,7 @@ class StudentProfileForm(FlaskForm):
     born = DateField(
         'Дата рождения',
         format='%d.%m.%Y',
-        render_kw={'readonly': True, 'class': 'form-control-plaintext'},
-        validators=[]
+        validators=[Optional()]
     )
     phone_num = TelField('Номер телефона', validators=[DataRequired(message="Укажите номер телефона")])
     about = TextAreaField('О себе', validators=[Optional()])
@@ -27,9 +26,10 @@ class StudentProfileForm(FlaskForm):
         render_kw={'readonly': True, 'class': 'form-control-plaintext'},
         validators=[Email(message="Неверный формат почты")]
     )
-    password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
-    confirm = PasswordField('Подтверждение пароля', validators=[
-        EqualTo('password', message="Пароли не совпадают")
+    current_password = PasswordField("Введите текущий пароль", validators=[DataRequired()])
+    new_password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
+    new_password_confirm = PasswordField('Подтверждение пароля', validators=[
+        EqualTo('new_password', message="Пароли не совпадают")
     ]
                             )
     submit = SubmitField('Сохранить')
@@ -46,9 +46,10 @@ class EmployerProfileForm(FlaskForm):
         render_kw={'readonly': True, 'class': 'form-control-plaintext'},
         validators=[Email()]
     )
-    password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
-    confirm = PasswordField('Подтверждение пароля', validators=[
-        EqualTo('password', message="Пароли не совпадают")
+    current_password = PasswordField("Введите текущий пароль", validators=[DataRequired()])
+    new_password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
+    new_password_confirm = PasswordField('Подтверждение пароля', validators=[
+        EqualTo('new_password', message="Пароли не совпадают")
     ])
     submit = SubmitField('Сохранить')
 
@@ -66,8 +67,9 @@ class UniversityProfileForm(FlaskForm):
         render_kw={'readonly': True, 'class': 'form-control-plaintext'},
         validators=[Email()]
     )
-    password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
-    confirm = PasswordField('Подтверждение пароля', validators=[
-        EqualTo('password', message="Пароли не совпадают")
+    current_password = PasswordField("Введите текущий пароль", validators=[DataRequired()])
+    new_password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
+    new_password_confirm = PasswordField('Подтверждение пароля', validators=[
+        EqualTo('new_password', message="Пароли не совпадают")
     ])
     submit = SubmitField('Сохранить')

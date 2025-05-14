@@ -13,6 +13,37 @@
         {% endif %}
     {% endwith %}
 
+    <a class="d-block fw-bold text-decoration-none"
+       data-bs-toggle="collapse"
+       href="#confirmed"
+       role="button"
+       aria-expanded="false"
+       aria-controls="confirmed">
+        <h3>Таблица всех студентов системы</h3>
+    </a>
+    <div class="collapse" id="confirmed">
+        <div class="table-box">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Id студента</th>
+                        <th>ФИО студента</th>
+                        <th>Наименование достижений студента</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.id }}</td>
+                        <td>{{ student.nsp }}</td>
+                        <td>{{ student.achievement_title }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="student_search_block">
         <form method="post" class="student_search_form">
             <p>{{ form.hidden_tag() }}</p>

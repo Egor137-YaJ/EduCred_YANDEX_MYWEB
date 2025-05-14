@@ -7,6 +7,8 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from sqlalchemy import or_
 from sqlalchemy.testing import not_in
 from werkzeug.security import generate_password_hash
+from wtforms.validators import DataRequired
+from wtforms import PasswordField
 
 from data import db_session
 from data.employer_find_student_form import EmplStudentSearchForm
@@ -419,6 +421,7 @@ def manage_proj():
 @app.route('/employer_workspace', methods=['GET', 'POST'])
 @login_required
 def employer_workspace():
+    students = []
     achievements_data = []
     student_fullname = None
     form = EmplStudentSearchForm()
@@ -426,6 +429,20 @@ def employer_workspace():
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
     employer = user.employer
+
+    all_students = db_sess.query(Student).all()
+    for student in all_students:
+        cur_student_achs = db_sess.query(Achievement).filter(
+            Achievement.student_id == student.id,
+            Achievement.end_date.isnot(None),
+            Achievement.end_date != ""
+        ).all()
+        if cur_student_achs:
+            students.append({
+                'id': student.id,
+                'nsp': student.student_nsp,
+                'achievement_title': ', '.join([f'"{ach.title}"' for ach in cur_student_achs])
+            })
 
     if form.validate_on_submit():
         if form.clear.data:
@@ -481,6 +498,7 @@ def employer_workspace():
 
     return render_template("employer_workspace.html",
                            form=form,
+                           students=students,
                            achievements=achievements_data,
                            joined_title=employer.title,
                            entered_id="" if not form.student_id.data or form.clear.data else entered_student_id,
@@ -637,9 +655,14 @@ def profile():
         form.populate_obj(profile)
         if user.role == 'university':
             profile.type = dict(form.type.choices).get(form.type.data)
-        pw = form.password.data
-        if pw:
-            user.set_password(pw)
+
+        cur_pw = form.current_password.data
+        new_pw = form.new_password.data
+        if new_pw:
+            if not cur_pw or not user.check_password(cur_pw):
+                flash('Текущий пароль введён неверно', 'danger')
+                return redirect(url_for('profile'))
+            user.set_password(new_pw)
         try:
             db_sess.commit()
             flash('Профиль успешно обновлён', 'success')

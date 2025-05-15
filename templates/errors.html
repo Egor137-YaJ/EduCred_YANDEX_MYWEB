@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { height: 100%; font-family: Arial, sans-serif; color: #fff; }
+        body { background: #121212; }
+
+        /* Навигация */
+        header {
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          padding: 20px 40px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          z-index: 2;
+        }
+        .logo { font-size: 24px; font-weight: bold; }
+        nav ul {
+          list-style: none;
+          display: flex;
+          gap: 30px;
+        }
+        nav a {
+          text-decoration: none;
+          color: #ccc;
+          font-size: 14px;
+          transition: color .2s;
+        }
+        nav a:hover { color: #fff; }
+
+        /* Основной блок */
+        .container {
+          display: flex;
+          height: 100%;
+          padding: 0 5%;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .left {
+          position: relative;
+          max-width: 45%;
+        }
+        .left h1 {
+          font-size: 48px;
+          line-height: 1.2;
+          margin-bottom: 16px;
+        }
+        .left p {
+          font-size: 16px;
+          color: #aaa;
+          margin-bottom: 24px;
+        }
+        .left .btn {
+          display: inline-block;
+          padding: 12px 24px;
+          background: #fff;
+          color: #121212;
+          text-decoration: none;
+          border-radius: 4px;
+          font-weight: bold;
+        }
+        /* Большой фон-текст 404 */
+        .left::before {
+          content: "{{ error }}";
+          position: absolute;
+          top: -20px;
+          left: -10px;
+          font-size: 200px;
+          color: rgba(255,255,255,0.05);
+          z-index: -1;
+        }
+
+        .right img {
+          max-height: 80vh;
+          border-radius: 8px;
+        }
+
+        @media(max-width: 800px){
+          .container { flex-direction: column; text-align: center; }
+          .left, .right { max-width: 100%; }
+          .left::before { font-size: 120px; top: -10px; left: 50%; transform: translateX(-50%); }
+          .right { margin-top: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">EduCred</div>
+    <nav>
+        <ul>
+            <li><a href="/contacts">Главная</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="container">
+    <div class="left">
+        <h1>Произошла<br>ошибка</h1>
+        <p>Пока ты здесь, мы знаем о проблеме и уже скоро это исправим.</p>
+        <a href="/" class="btn">Окак, на главную</a>
+    </div>
+    <div class="right">
+        <img src="{{ url_for('static', filename='images/okak.png') }}" alt="Okak Cat">
+    </div>
+</div>
+
+</body>
+</html>

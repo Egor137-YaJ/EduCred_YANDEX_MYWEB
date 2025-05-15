@@ -787,6 +787,56 @@ def workspace():
         return render_template('home.html', token=None, result=None, university=None, title='Главная')
 
 
+@app.route('/errors')
+def errors():
+    abort(404)
+
+
+@app.errorhandler(400)
+def bad_request(e):
+    return render_template('errors.html', error='400', title='400 - Некорректный запрос'), 400
+
+
+@app.errorhandler(401)
+def unauthorized(e):
+    return render_template('errors.html', error='401', title='401 - Неавторизованный запрос'), 401
+
+
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('errors.html', error='403', title='403 - Доступ запрещён'), 403
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('errors.html', error='404', title='404 - Страница не найдена'), 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return render_template('errors.html', error='405', title='405 - Метод не разрешён'), 405
+
+
+@app.errorhandler(406)
+def not_acceptable(e):
+    return render_template('errors.html', error='406', title='406 - Не применимо'), 406
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('errors.html', error='500', title='500 - Внутренняя ошибка сервера'), 500
+
+
+@app.errorhandler(502)
+def bad_gateway(e):
+    return render_template('errors.html', error='502', title='502 - Сервис временно недоступен'), 502
+
+
+@app.errorhandler(503)
+def service_unavailable(e):
+    return render_template('errors.html', error='503', title='503 - Сервис временно недоступен'), 503
+
+
 def main():
     try:
         db_session.global_init("db/EduCred_data.db")

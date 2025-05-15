@@ -1,7 +1,6 @@
 {% extends "workspace_base.html" %}
 {% block content %}
-<h1 align="center">Страничка студента</h1>
-<h1><small>Ваше ID: {{ student_id }}</small></h1>
+<h1 align="center">Страничка студента.<br><small>Ваш ID: {{ student_id }}.</small></h1>
 <div class="container">
     <br>
     <h2 align="center">Приглашения на собеседование</h2>
@@ -13,7 +12,7 @@
                 <th>ИНН</th>
                 <th>Наниматель</th>
                 <th>Адрес</th>
-                <th>ФИО управляющего</th>
+                <th>Управляющий</th>
                 <th>Контактный номер</th>
             </tr>
             </thead>
@@ -78,23 +77,28 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for ach in nonapproved_achievements %}
-                <tr>
-                    <td>{{ ach.title }}</td>
-                    <td>{{ ach.university_title }}</td>
-                    <td>
-                        {% set ext = ach.file_path.split('.')[-1].lower() %}
-                        {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
-                            <audio controls>
-                                <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/{{ ext }}">
-                                Ваш браузер не поддерживает аудио.
-                            </audio>
-                        {% else %}
-                            <a href="{{ url_for('static', filename=ach.file_path) }}" download class="btn btn-outline-primary btn-sm">Скачать файл</a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
+                    {% for ach in nonapproved_achievements %}
+                        <tr>
+                            <td>{{ ach.title }}</td>
+                            <td>{{ ach.university_title }}</td>
+                            <td>
+                                {% set ext = ach.file_path.split('.')[-1].lower() %}
+                                {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
+                                    <audio controls>
+                                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                                        Ваш браузер не поддерживает аудио.
+                                    </audio>
+                                {% else %}
+                                    <a href="{{ url_for('download_ach',
+                                                        title=ach.title,
+                                                        filename=ach.file_path.split('/')[-1]) }}"
+                                        class="btn btn-outline-primary btn-sm">
+                                        Скачать файл достижения
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -127,26 +131,34 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for ach in approved_achievements %}
-                <tr>
-                    <td>{{ ach.token }}</td>
-                    <td>{{ ach.title }}</td>
-                    <td>{{ ach.university_title }}</td>
-                    <td>
-                        {% set ext = ach.file_path.split('.')[-1].lower() %}
-                        {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
-                            <audio controls>
-                                <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/{{ ext }}">
-                                Ваш браузер не поддерживает аудио.
-                            </audio>
-                        {% else %}
-                            <a href="{{ url_for('static', filename=ach.file_path) }}" download="{{ ach.title }}_{{ ach.student_nsp }}.{{ ext }}" class="btn btn-outline-primary btn-sm">Скачать файл</a>
-                        {% endif %}
-                        <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank"
-                            class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
-                    </td>
-                </tr>
-                {% endfor %}
+                    {% for ach in approved_achievements %}
+                        <tr>
+                            <td>{{ ach.token }}</td>
+                            <td>{{ ach.title }}</td>
+                            <td>{{ ach.university_title }}</td>
+                            <td>
+                                <a href="{{ 'check/certificate/' + ach.title + '/' + ach.approve.split('/')[1] }}"
+                                    target="_blank"
+                                    class="btn btn-success">
+                                    Открыть сертификат подтверждения
+                                </a>
+                                {% set ext = ach.file_path.split('.')[-1].lower() %}
+                                {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
+                                    <audio controls>
+                                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
+                                        Ваш браузер не поддерживает аудио.
+                                    </audio>
+                                {% else %}
+                                    <a href="{{ url_for('download_ach',
+                                                        title=ach.title,
+                                                        filename=ach.file_path.split('/')[-1]) }}"
+                                       class="btn btn-outline-primary btn-sm">
+                                        Скачать файл достижения
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -209,7 +221,7 @@
                 <thead>
                 <tr>
                     <th>Токен</th>
-                    <th>Название достижения</th>
+                    <th>Название курса</th>
                     <th>Учебное заведение</th>
                     <th>Файл</th>
                 </tr>

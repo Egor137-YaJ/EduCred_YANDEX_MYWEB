@@ -84,18 +84,31 @@
                         <td>{{ ach.university_title }}</td>
                         <td>
                             {% if ach.approve != 'Not Required' %}
+                                <a href="{{ 'check/certificate/' + ach.title + '/' + ach.approve.split('/')[1] }}"
+                                   target="_blank"
+                                   class="btn btn-success">
+                                    Открыть сертификат подтверждения
+                                </a>
                                 {% set ext = ach.file_path.split('.')[-1].lower() %}
                                 {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
                                     <audio controls>
-                                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/{{ ext }}">
+                                        <source src="{{ url_for('static', filename=ach.file_path) }}" type="audio/mpeg">
                                         Ваш браузер не поддерживает аудио.
                                     </audio>
                                 {% else %}
-                                    <a href="{{ url_for('static', filename=ach.file_path) }}" download class="btn btn-outline-primary btn-sm">Скачать файл</a>
+                                    <a href="{{ url_for('download_ach',
+                                                        title=ach.title,
+                                                        filename=ach.file_path.split('/')[-1]) }}"
+                                       class="btn btn-outline-primary btn-sm">
+                                        Скачать файл достижения
+                                    </a>
                                 {% endif %}
-                                <a href="{{ url_for('static', filename=ach.approve) }}" target="_blank" class="btn btn-outline-primary btn-sm">Подтверждение PDF</a>
                             {% else %}
-                                <a href="{{ url_for('static', filename=ach.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Открыть PDF</a>
+                                <a href="{{ 'check/certificate/' + ach.title + '/' + ach.file_path.split('/')[1] }}"
+                                   target="_blank"
+                                   class="btn btn-success">
+                                    Открыть сертификат
+                                </a>
                             {% endif %}
                         </td>
                         <td>{{ ach.mark }}</td>

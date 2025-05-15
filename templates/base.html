@@ -15,7 +15,9 @@
 <header>
     <nav class="navbar navbar-light bg-light">
         <div class="container d-flex justify-content-between align-items-center">
-            <h1 class="mb-0">EduCred</h1>
+            <a href="{{ url_for('home') }}" class="text-decoration-none">
+                <h1 class="mb-0">EduCred</h1>
+            </a>
             <div class="d-flex align-items-center">
                 <a href="{{ url_for('login') }}" class="btn btn-outline-primary me-2">
                     Войти

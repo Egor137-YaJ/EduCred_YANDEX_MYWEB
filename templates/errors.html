@@ -94,7 +94,7 @@
     <div class="logo">EduCred</div>
     <nav>
         <ul>
-            <li><a href="/contacts">Главная</a></li>
+            <li><a href="{{ url_for('home') }}">Главная</a></li>
         </ul>
     </nav>
 </header>
@@ -103,7 +103,7 @@
     <div class="left">
         <h1>Произошла<br>ошибка</h1>
         <p>Пока ты здесь, мы знаем о проблеме и уже скоро это исправим.</p>
-        <a href="/" class="btn">Окак, на главную</a>
+        <a href="{{ url_for('home') }}" class="btn">Окак, на главную</a>
     </div>
     <div class="right">
         <img src="{{ url_for('static', filename='images/okak.png') }}" alt="Okak Cat">

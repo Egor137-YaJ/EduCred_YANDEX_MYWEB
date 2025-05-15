@@ -237,19 +237,15 @@ def register_student():
                 return render_template('register_student.html', title='Регистрация студента',
                                        form=form, style=url_for('static', filename='css/style.css'),
                                        message="This Student already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first():
+            if db_sess.query(User).filter(User.email == form.email.data).first() or\
+                    any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
                 return render_template('register_student.html', title='Регистрация студента',
                                        form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Account with this email already exists")
-            if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-                return render_template('register_student.html', title='Регистрация студента',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Account with this password already exists")
-
+                                       message="Existing data, retry please")
             if form.born_date.data.year < 1940:
                 return render_template('register_student.html', title='Регистрация студента',
                                        form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Non existing botn date")
+                                       message="Non existing born date")
 
             user = User(
                 email=form.email.data,

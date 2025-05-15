@@ -1,18 +1,37 @@
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, PasswordField, IntegerField, StringField
 from wtforms.fields import EmailField
-from wtforms.validators import DataRequired, Regexp
+from wtforms.validators import DataRequired, Regexp, Email, ValidationError
+import re
+
+
+def password_complexity(form, field):
+    pwd = field.data
+    errors = []
+    if len(pwd) < 8:
+        errors.append("не менее 8 символов")
+    if not re.search(r'[A-ZА-Я]', pwd):
+        errors.append("заглавную букву")
+    if not re.search(r'[a-zа-я]', pwd):
+        errors.append("строчную букву")
+    if not re.search(r'\d', pwd):
+        errors.append("цифру")
+    if not re.search(r'\W', pwd):
+        errors.append("спецсимвол")
+    if errors:
+        raise ValidationError(
+            "Пароль должен содержать: " + ", ".join(errors))
 
 
 class RegisterEmployerForm(FlaskForm):
     INN = IntegerField('ИНН', validators=[DataRequired()])
     phone_number = StringField('Номер телефона',
-                        validators=[
-                            DataRequired(),
-                            Regexp(r'^(?:\+7|8)\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{2}[-.\s]?\d{2}$')
-                        ])
+                               validators=[
+                                   DataRequired(),
+                                   Regexp(r'^(?:\+7|8)\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{2}[-.\s]?\d{2}$')
+                               ])
     speciality = StringField('Сфера деятельности', validators=[DataRequired()])
-    email = EmailField('Почта', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
+    email = EmailField('Почта', validators=[DataRequired(), Email('Некорректный email')])
+    password = PasswordField('Пароль', validators=[DataRequired(), password_complexity])
     password_again = PasswordField('Повторите пароль', validators=[DataRequired()])
     submit = SubmitField('Подтвердить')

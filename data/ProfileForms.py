@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, DateField, TelField, TextAreaField, PasswordField, SubmitField, SelectField
-from wtforms.validators import DataRequired, Email, EqualTo, Optional, Length, ValidationError
+from wtforms.validators import DataRequired, Email, EqualTo, Optional, ValidationError
+import re
 
 choices = ['Академия', 'Университет', 'Институт',
            'Техникум', 'Гимназия', 'Школа', 'Лицей',
@@ -10,6 +11,24 @@ choices = ['Академия', 'Университет', 'Институт',
 def validate_choice(form, field):
     if field.data not in [choice[0] for choice in field.choices]:
         raise ValidationError('Invalid choice selected.')
+
+
+def password_complexity(form, field):
+    pwd = field.data or ''
+    errors = []
+    if len(pwd) < 8:
+        errors.append("не менее 8 символов")
+    if not re.search(r'[A-ZА-Я]', pwd):
+        errors.append("заглавную букву")
+    if not re.search(r'[a-zа-я]', pwd):
+        errors.append("строчную букву")
+    if not re.search(r'\d', pwd):
+        errors.append("цифру")
+    if not re.search(r'\W', pwd):
+        errors.append("спецсимвол")
+    if errors:
+        raise ValidationError(
+            "Пароль должен содержать: " + ", ".join(errors))
 
 
 class StudentProfileForm(FlaskForm):
@@ -27,11 +46,11 @@ class StudentProfileForm(FlaskForm):
         validators=[Email(message="Неверный формат почты")]
     )
     current_password = PasswordField("Введите текущий пароль", validators=[DataRequired()])
-    new_password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
+    new_password = PasswordField('Пароль', validators=[Optional(), password_complexity])
     new_password_confirm = PasswordField('Подтверждение пароля', validators=[
         EqualTo('new_password', message="Пароли не совпадают")
     ]
-                            )
+                                         )
     submit = SubmitField('Сохранить')
 
 
@@ -47,7 +66,7 @@ class EmployerProfileForm(FlaskForm):
         validators=[Email()]
     )
     current_password = PasswordField("Введите текущий пароль", validators=[DataRequired()])
-    new_password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
+    new_password = PasswordField('Пароль', validators=[Optional(), password_complexity])
     new_password_confirm = PasswordField('Подтверждение пароля', validators=[
         EqualTo('new_password', message="Пароли не совпадают")
     ])
@@ -68,7 +87,7 @@ class UniversityProfileForm(FlaskForm):
         validators=[Email()]
     )
     current_password = PasswordField("Введите текущий пароль", validators=[DataRequired()])
-    new_password = PasswordField('Пароль', validators=[Optional(), Length(min=6)])
+    new_password = PasswordField('Пароль', validators=[Optional(), password_complexity])
     new_password_confirm = PasswordField('Подтверждение пароля', validators=[
         EqualTo('new_password', message="Пароли не совпадают")
     ])

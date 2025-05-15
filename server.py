@@ -103,16 +103,12 @@ def register_university():
                                        title='Регистрация образовательного учреждения',
                                        form=form, style=url_for('static', filename='css/style.css'),
                                        message="This University already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first():
+            if db_sess.query(User).filter(User.email == form.email.data).first() or\
+                    any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
                 return render_template('register_university.html',
                                        title='Регистрация образовательного учреждения',
                                        form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Account with this email already exists")
-            if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-                return render_template('register_university.html',
-                                       title='Регистрация образовательного учреждения',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Account with this password already exists")
+                                       message="Existing data, retry please")
 
             title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
             type = dict(form.type.choices).get(form.type.data)
@@ -179,14 +175,11 @@ def register_employer():
                 return render_template('register_employer.html', title='Регистрация работодателя',
                                        form=form, style=url_for('static', filename='css/style.css'),
                                        message="This Employer already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first():
+            if db_sess.query(User).filter(User.email == form.email.data).first() or\
+                    any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
                 return render_template('register_employer.html', title='Регистрация работодателя',
                                        form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Account with this email already exists")
-            if any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-                return render_template('register_employer.html', title='Регистрация работодателя',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Account with this password already exists")
+                                       message="Existing data, retry please")
 
             title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
             if 'Ошибка' in ' '.join([title, address, boss_nsp]):

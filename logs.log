@@ -50,3 +50,7 @@ Traceback (most recent call last):
 TypeError: wtforms.widgets.core.html_params() got multiple values for keyword argument 'name'
 2025-05-16 14:03:31,922 | ERROR    | server | An error occurred: 'LoginForm' object has no attribute 'captcha_token'
 2025-05-16 14:03:46,129 | ERROR    | server | An error occurred: 'LoginForm' object has no attribute 'captcha_token'
+2025-05-16 17:09:04,588 | ERROR    | server | An error occurred: 'AnonymousUserMixin' object has no attribute 'id'
+2025-05-16 17:09:11,169 | ERROR    | server | An error occurred: 'AnonymousUserMixin' object has no attribute 'id'
+2025-05-16 17:09:37,637 | ERROR    | server | An error occurred: 'AnonymousUserMixin' object has no attribute 'id'
+2025-05-16 17:09:53,639 | ERROR    | server | An error occurred: 'AnonymousUserMixin' object has no attribute 'id'

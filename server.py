@@ -55,7 +55,6 @@ def load_user(user_id):
 @app.route('/home', methods=['GET', 'POST'])
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    logout_user()
     try:
         db_sess = db_session.create_session()
         token = None
@@ -308,6 +307,8 @@ def register_student():
 def login():
     form = LoginForm()
     try:
+        if current_user.is_authenticated:
+            return redirect('/workspace')
         if form.validate_on_submit():
             ip = request.remote_addr  # ip-адрес пользователя для проверки капчи
             token = form.smart_token.data  # сгенерированный токен для проверки капчи
@@ -330,6 +331,13 @@ def login():
     return render_template('login.html', title='Вход',
                            form=form, style=url_for('static', filename='css/style.css'),
                            captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
 
 
 # Обработчик рабочей страницы ОУ

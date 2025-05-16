@@ -4,6 +4,8 @@ from flask_login import login_required
 from data import db_session
 from data.Achievements import Achievement
 
+
+# получение открытых курсов студента из бд
 class StudentCoursesAPI(Resource):
     method_decorators = [login_required]
 

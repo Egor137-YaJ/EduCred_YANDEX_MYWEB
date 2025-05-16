@@ -3,6 +3,7 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
 
+# форма открытия курса
 class UniverOpenCourseForm(FlaskForm):
     open_student_id = StringField(
         'ID студента',

@@ -8,11 +8,13 @@ choices = ['Академия', 'Университет', 'Институт',
            'Коллледж', 'Училище', 'Онлайн-курс', 'Другое']
 
 
+# валидатор для поля с выбором ответа из списка
 def validate_choice(form, field):
     if field.data not in [choice[0] for choice in field.choices]:
         raise ValidationError('Invalid choice selected.')
 
 
+# валидатор сложности пароля
 def password_complexity(form, field):
     pwd = field.data or ''
     errors = []
@@ -31,6 +33,7 @@ def password_complexity(form, field):
             "Пароль должен содержать: " + ", ".join(errors))
 
 
+# форма профиля для студента
 class StudentProfileForm(FlaskForm):
     student_nsp = StringField('ФИО', validators=[DataRequired(message="Укажите ФИО")])
     born = DateField(
@@ -54,6 +57,7 @@ class StudentProfileForm(FlaskForm):
     submit = SubmitField('Сохранить')
 
 
+# форма профиля для работодателя
 class EmployerProfileForm(FlaskForm):
     INN = StringField('ИНН', render_kw={'readonly': True, 'class': 'form-control-plaintext'})
     title = StringField('Название', render_kw={'readonly': True, 'class': 'form-control-plaintext'})
@@ -73,6 +77,7 @@ class EmployerProfileForm(FlaskForm):
     submit = SubmitField('Сохранить')
 
 
+# форма профиля для оу
 class UniversityProfileForm(FlaskForm):
     INN = StringField('ИНН', render_kw={'readonly': True, 'class': 'form-control-plaintext'})
     title = StringField('Название', render_kw={'readonly': True, 'class': 'form-control-plaintext'})

@@ -3,14 +3,14 @@ import json
 from .config import SMARTCAPTCHA_SERVER_KEY
 
 
+# функция, проверяющая корректность введённой капчи с помощью серверов яндекса
 def check_captcha(app, token, ip):
     resp = requests.post(
         "https://smartcaptcha.yandexcloud.net/validate",
         data={
             "secret": SMARTCAPTCHA_SERVER_KEY,
             "token": token,
-            "ip": ip  # Способ получения IP-адреса зависит от вашего фреймворка и прокси.
-            # Например, во Flask это может быть request.remote_addr
+            "ip": ip
         },
         timeout=1
     )

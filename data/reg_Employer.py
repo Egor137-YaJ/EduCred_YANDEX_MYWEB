@@ -5,6 +5,7 @@ from wtforms.validators import DataRequired, Regexp, Email, ValidationError
 import re
 
 
+# валидатор сложности пароля
 def password_complexity(form, field):
     pwd = field.data
     errors = []
@@ -23,6 +24,7 @@ def password_complexity(form, field):
             "Пароль должен содержать: " + ", ".join(errors))
 
 
+# форма регистрации работодателя
 class RegisterEmployerForm(FlaskForm):
     INN = IntegerField('ИНН', validators=[DataRequired()])
     phone_number = StringField('Номер телефона',
@@ -34,4 +36,5 @@ class RegisterEmployerForm(FlaskForm):
     email = EmailField('Почта', validators=[DataRequired(), Email('Некорректный email')])
     password = PasswordField('Пароль', validators=[DataRequired(), password_complexity])
     password_again = PasswordField('Повторите пароль', validators=[DataRequired()])
+    smart_token = StringField('', render_kw={'type': 'hidden'}, name='smart-token')
     submit = SubmitField('Подтвердить')

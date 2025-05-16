@@ -9,11 +9,13 @@ choices = ['Академия', 'Университет', 'Институт',
            'Коллледж', 'Училище', 'Онлайн-курс', 'Другое']
 
 
+# валидатор для поля с выбором ответа из списка
 def validate_choice(form, field):
     if field.data not in [choice[0] for choice in field.choices]:
         raise ValidationError('Invalid choice selected.')
 
 
+# валидатор сложности пароля
 def password_complexity(form, field):
     pwd = field.data
     errors = []
@@ -32,6 +34,7 @@ def password_complexity(form, field):
             "Пароль должен содержать: " + ", ".join(errors))
 
 
+# форма регистрации университета
 class RegisterUniverForm(FlaskForm):
     INN = IntegerField('ИНН', validators=[DataRequired()])
     type = SelectField('Тип образовательного учреждения',
@@ -40,4 +43,5 @@ class RegisterUniverForm(FlaskForm):
     email = EmailField('Почта', validators=[DataRequired(), Email('Некорректный email')])
     password = PasswordField('Пароль', validators=[DataRequired(), password_complexity])
     password_again = PasswordField('Повторите пароль', validators=[DataRequired(), equal_to('password')])
+    smart_token = StringField('', render_kw={'type': 'hidden'}, name='smart-token')
     submit = SubmitField('Подтвердить')

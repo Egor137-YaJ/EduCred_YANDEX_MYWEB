@@ -2,24 +2,23 @@ import json
 import requests
 from .config import dadata_token
 
-
 group_entity_abbreviations = [
     "ООО",  # Общество с ограниченной ответственностью
     "ОАО",  # Открытое акционерное общество
     "ЗАО",  # Закрытое акционерное общество
     "ПАО",  # Публичное акционерное общество
     "ТСЖ",  # Товарищество собственников жилья
-    "АО",   # Акционерное общество
-    "СП",   # Совместное предприятие
-    "ГП",   # Государственное предприятие
+    "АО",  # Акционерное общество
+    "СП",  # Совместное предприятие
+    "ГП",  # Государственное предприятие
     "ТПК",  # Торгово-производственная компания
-    "АУ",   # Автономное учреждение
+    "АУ",  # Автономное учреждение
     "МУП",  # Муниципальное унитарное предприятие
     "ГУП",  # Государственное унитарное предприятие
-    "ПТ",   # Производственное товарищество
-    "ПК",   # Производственный кооператив
+    "ПТ",  # Производственное товарищество
+    "ПК",  # Производственный кооператив
     "СНТ",  # Садоводческое некоммерческое товарищество
-    "ОП",   # Обособленное подразделение
+    "ОП",  # Обособленное подразделение
 ]
 try:
     f_path = open('abbreviations.json')
@@ -31,6 +30,7 @@ with open(path, encoding='UTF-8') as f:
     all_abbreviations = json.load(f)
 
 
+# функция для сокращения полных наименований, путём замены полных форм на аббревиатуры
 def change_if_full_comp(boss):
     for full in all_abbreviations.keys():
         if full.lower() in boss.lower():
@@ -40,6 +40,7 @@ def change_if_full_comp(boss):
     return boss
 
 
+# получение информации о работодателях или оу по ИНН через стороннее api
 def get_info_by_inn(inn):
     url = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party"
     token = dadata_token
@@ -61,7 +62,8 @@ def get_info_by_inn(inn):
             address = suggestion['data']['address']['value']
             boss_nsp = suggestion['data']['management']['name'] if suggestion['data'].get(
                 'management') else suggestion['data']['name']['full']
-            boss_nsp = change_if_full_comp(boss_nsp) if suggestion['data']['opf']['short'] in group_entity_abbreviations else boss_nsp
+            boss_nsp = change_if_full_comp(boss_nsp) if suggestion['data']['opf'][
+                                                            'short'] in group_entity_abbreviations else boss_nsp
             check = suggestion['data']['name']['full_with_opf']
 
             return title, address, boss_nsp, check

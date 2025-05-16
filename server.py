@@ -26,7 +26,8 @@ from data.Achievements import Achievement
 from data.find_info_by_INN import get_info_by_inn
 from data.cert_creating import tokenize, pdf_creating
 from data.ProfileForms import StudentProfileForm, EmployerProfileForm, UniversityProfileForm
-from data.config import secret_token
+from data.config import secret_token, SMARTCAPTCHA_SERVER_KEY, SMARTCAPTCHA_CLIENT_KEY
+from data.captcha_func import check_captcha
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = secret_token
@@ -43,12 +44,14 @@ file_handler.setFormatter(formatter)
 app.logger.addHandler(file_handler)
 
 
+# обработчик для получения данных о пользователе
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
     return db_sess.query(User).get(user_id)
 
 
+# обработчик главной страницы
 @app.route('/home', methods=['GET', 'POST'])
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -59,6 +62,7 @@ def home():
         achievement = None
         university = None
 
+        # обработка формы проверки достижений
         if request.method == 'POST':
             token = request.form.get('token', '').strip()
             if not token:
@@ -82,208 +86,253 @@ def home():
             title='Главная'
         )
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователю главной страницы с пустой формой, вывод сообщения об ошибке и логирование ошибки
         flash(f'Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
         app.logger.error(e)
         return render_template('home.html', token=None, result=None, university=None, title='Главная')
 
 
+# обработчик страницы регистрации оу
 @app.route('/register_university', methods=['GET', 'POST'])
 def register_university():
     form = RegisterUniverForm()
     try:
         if form.validate_on_submit():
-            if form.password.data != form.password_again.data:
-                return render_template('register_university.html',
-                                       title='Регистрация образовательного учреждения',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Passwords don't match")
-            db_sess = db_session.create_session()
-            if db_sess.query(University).filter(University.INN == form.INN.data).first():
-                return render_template('register_university.html',
-                                       title='Регистрация образовательного учреждения',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="This University already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first() or\
-                    any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-                return render_template('register_university.html',
-                                       title='Регистрация образовательного учреждения',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Existing data, retry please")
-
-            title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
-            type = dict(form.type.choices).get(form.type.data)
-            if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-                return render_template('register_university.html',
-                                       title='Регистрация образовательного учреждения',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Error in INN request - may be non existing INN")
-
-            if type.lower() not in ['онлайн-курс', 'другое']:
-                if type.lower() not in check.lower():
+            ip = request.remote_addr  # ip-адрес пользователя для проверки капчи
+            token = form.smart_token.data  # сгенерированный токен для проверки капчи
+            if check_captcha(app, token, ip):  # если капча подтверждена, то продолжить обработку формы
+                if form.password.data != form.password_again.data:
                     return render_template('register_university.html',
                                            title='Регистрация образовательного учреждения',
                                            form=form, style=url_for('static', filename='css/style.css'),
-                                           message="Types doesn't match")
-            else:
-                if any(type_n.lower() in title.lower() for type_n in list(map(str.lower, choices))):
+                                           message="Passwords don't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                db_sess = db_session.create_session()
+                if db_sess.query(University).filter(University.INN == form.INN.data).first():
                     return render_template('register_university.html',
                                            title='Регистрация образовательного учреждения',
                                            form=form, style=url_for('static', filename='css/style.css'),
-                                           message="Types doesn't match")
-            user = User(
-                email=form.email.data,
-                role='university'
-            )
-            user.set_password(form.password.data)
-            db_sess.add(user)
-            db_sess.commit()
-            if ';' in title:
-                title = title.split(';')[1]
-            elif ',' in title:
-                title = title.split(', ')[1]
-            univer = University(
-                user_id=user.id,
-                INN=form.INN.data,
-                title=title,
-                address=address,
-                boss_nsp=boss_nsp,
-                type=type
-            )
-            db_sess.add(univer)
-            db_sess.commit()
-            login_user(user)
-            return redirect('/university_workspace')
+                                           message="This University already exists",
+                                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                if db_sess.query(User).filter(User.email == form.email.data).first() or \
+                        any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
+                    return render_template('register_university.html',
+                                           title='Регистрация образовательного учреждения',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Existing data, retry please", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+
+                title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
+                type = dict(form.type.choices).get(form.type.data)
+                if 'Ошибка' in ' '.join([title, address, boss_nsp]):
+                    return render_template('register_university.html',
+                                           title='Регистрация образовательного учреждения',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Error in INN request - may be non existing INN",
+                                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+
+                if type.lower() not in ['онлайн-курс', 'другое']:
+                    if type.lower() not in check.lower():
+                        return render_template('register_university.html',
+                                               title='Регистрация образовательного учреждения',
+                                               form=form, style=url_for('static', filename='css/style.css'),
+                                               message="Types doesn't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                else:
+                    if any(type_n.lower() in title.lower() for type_n in list(map(str.lower, choices))):
+                        return render_template('register_university.html',
+                                               title='Регистрация образовательного учреждения',
+                                               form=form, style=url_for('static', filename='css/style.css'),
+                                               message="Types doesn't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                # создание нового пользователя в бд
+                user = User(
+                    email=form.email.data,
+                    role='university'
+                )
+                # сохранение хешированного пароля в бд
+                user.set_password(form.password.data)
+                db_sess.add(user)
+                db_sess.commit()
+                if ';' in title:
+                    title = title.split(';')[1]
+                elif ',' in title:
+                    title = title.split(', ')[1]
+                # заполнение данных об ОУ в бд
+                univer = University(
+                    user_id=user.id,
+                    INN=form.INN.data,
+                    title=title,
+                    address=address,
+                    boss_nsp=boss_nsp,
+                    type=type
+                )
+                db_sess.add(univer)
+                db_sess.commit()
+                login_user(user)
+                return redirect('/university_workspace')
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователю страницы, вывод сообщения об ошибке и логирование ошибки
         app.logger.error('An error occurred: %s', e)
         flash('Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
     return render_template('register_university.html',
                            title='Регистрация образовательного учреждения',
-                           form=form, style=url_for('static', filename='css/style.css'))
+                           form=form, style=url_for('static', filename='css/style.css'),
+                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
 
+# обработчик страницы регистрации работодателя
 @app.route('/register_employer', methods=['GET', 'POST'])
 def register_employer():
     form = RegisterEmployerForm()
     try:
         if form.validate_on_submit():
-            if form.password.data != form.password_again.data:
-                return render_template('register_employer.html', title='Регистрация работодателя',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Passwords don't match")
-            db_sess = db_session.create_session()
-            if db_sess.query(Employer).filter(Employer.INN == form.INN.data).first():
-                return render_template('register_employer.html', title='Регистрация работодателя',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="This Employer already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first() or\
-                    any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-                return render_template('register_employer.html', title='Регистрация работодателя',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Existing data, retry please")
+            ip = request.remote_addr  # ip-адрес пользователя для проверки капчи
+            token = form.smart_token.data  # сгенерированный токен для проверки капчи
+            if check_captcha(app, token, ip):  # если капча подтверждена, то продолжить обработку формы
+                if form.password.data != form.password_again.data:
+                    return render_template('register_employer.html', title='Регистрация работодателя',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Passwords don't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                db_sess = db_session.create_session()
+                if db_sess.query(Employer).filter(Employer.INN == form.INN.data).first():
+                    return render_template('register_employer.html', title='Регистрация работодателя',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="This Employer already exists", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                if db_sess.query(User).filter(User.email == form.email.data).first() or \
+                        any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
+                    return render_template('register_employer.html', title='Регистрация работодателя',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Existing data, retry please", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
-            title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
-            if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-                return render_template('register_employer.html', title='Регистрация работодателя',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Error in INN request - may be non existing INN")
-
-            user = User(
-                email=form.email.data,
-                role='employer'
-            )
-            user.set_password(form.password.data)
-            db_sess.add(user)
-            db_sess.commit()
-            employer = Employer(
-                user_id=user.id,
-                INN=form.INN.data,
-                title=title,
-                address=address,
-                boss_nsp=boss_nsp,
-                phone_num=form.phone_number.data,
-                scope=form.speciality.data,
-            )
-            db_sess.add(employer)
-            db_sess.commit()
-            login_user(user)
-            return redirect('/employer_workspace')
+                title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
+                if 'Ошибка' in ' '.join([title, address, boss_nsp]):
+                    return render_template('register_employer.html', title='Регистрация работодателя',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Error in INN request - may be non existing INN",
+                                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                # создание нового юзера в бд
+                user = User(
+                    email=form.email.data,
+                    role='employer'
+                )
+                # сохранение хешированного пароля в бд
+                user.set_password(form.password.data)
+                db_sess.add(user)
+                db_sess.commit()
+                # заполнение данных о работодателе в бд
+                employer = Employer(
+                    user_id=user.id,
+                    INN=form.INN.data,
+                    title=title,
+                    address=address,
+                    boss_nsp=boss_nsp,
+                    phone_num=form.phone_number.data,
+                    scope=form.speciality.data,
+                )
+                db_sess.add(employer)
+                db_sess.commit()
+                login_user(user)
+                return redirect('/employer_workspace')
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователю страницы, вывод сообщения об ошибке и логирование ошибки
         app.logger.error('An error occurred: %s', e)
         flash('Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
     return render_template('register_employer.html', title='Регистрация работодателя',
-                           form=form, style=url_for('static', filename='css/style.css'))
+                           form=form, style=url_for('static', filename='css/style.css'),
+                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
 
+# обработчик страницы регистрации студента
 @app.route('/register_student', methods=['GET', 'POST'])
 def register_student():
     form = RegisterStudentForm()
     try:
         if form.validate_on_submit():
-            if form.password.data != form.password_again.data:
-                return render_template('register_student.html', title='Регистрация студента',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Passwords don't match")
-            db_sess = db_session.create_session()
-            if db_sess.query(Student).filter(Student.student_nsp == form.NSP.data,
-                                             Student.born == form.born_date.data,
-                                             Student.phone_num == form.phone_number.data).first():
-                return render_template('register_student.html', title='Регистрация студента',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="This Student already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first() or\
-                    any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-                return render_template('register_student.html', title='Регистрация студента',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Existing data, retry please")
-            if form.born_date.data.year < 1940:
-                return render_template('register_student.html', title='Регистрация студента',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Non existing born date")
+            ip = request.remote_addr  # ip-адрес пользователя для проверки капчи
+            token = form.smart_token.data  # сгенерированный токен для проверки капчи
+            if check_captcha(app, token, ip):  # если капча подтверждена, то продолжить обработку формы
+                if form.password.data != form.password_again.data:
+                    return render_template('register_student.html', title='Регистрация студента',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Passwords don't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                db_sess = db_session.create_session()
+                if db_sess.query(Student).filter(Student.student_nsp == form.NSP.data,
+                                                 Student.born == form.born_date.data,
+                                                 Student.phone_num == form.phone_number.data).first():
+                    return render_template('register_student.html', title='Регистрация студента',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="This Student already exists", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                if db_sess.query(User).filter(User.email == form.email.data).first() or \
+                        any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
+                    return render_template('register_student.html', title='Регистрация студента',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Existing data, retry please", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                if form.born_date.data.year < 1940:
+                    return render_template('register_student.html', title='Регистрация студента',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Non existing born date", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
-            user = User(
-                email=form.email.data,
-                role='student'
-            )
-            user.set_password(form.password.data)
-            db_sess.add(user)
-            db_sess.commit()
-            student = Student(
-                user_id=user.id,
-                student_nsp=form.NSP.data,
-                born=form.born_date.data,
-                phone_num=form.phone_number.data,
-                about=form.about.data,
-            )
-            db_sess.add(student)
-            db_sess.commit()
-            login_user(user)
-            return redirect('/student_workspace')
+                # создание нового пользователя в бд
+                user = User(
+                    email=form.email.data,
+                    role='student'
+                )
+                # сохранение хешированного пароля в бд
+                user.set_password(form.password.data)
+                db_sess.add(user)
+                db_sess.commit()
+                # заполнение данных о студенте в бд
+                student = Student(
+                    user_id=user.id,
+                    student_nsp=form.NSP.data,
+                    born=form.born_date.data,
+                    phone_num=form.phone_number.data,
+                    about=form.about.data,
+                )
+                db_sess.add(student)
+                db_sess.commit()
+                login_user(user)
+                return redirect('/student_workspace')
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователю страницы, вывод сообщения об ошибке и логирование ошибки
         app.logger.error('An error occurred: %s', e)
         flash('Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
     return render_template('register_student.html', title='Регистрация студента',
-                           form=form, style=url_for('static', filename='css/style.css'))
+                           form=form, style=url_for('static', filename='css/style.css'),
+                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
 
+# обработчик страницы авторизации
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     try:
         if form.validate_on_submit():
-            db_sess = db_session.create_session()
-            user = db_sess.query(User).filter(User.email == form.email.data).first()
-            if user and user.check_password(form.password.data):
-                login_user(user)
-                return redirect('/workspace')
-            return render_template('login.html', message="Wrong login or password",
-                                   form=form, style=url_for('static', filename='css/style.css'), title='Вход')
+            ip = request.remote_addr  # ip-адрес пользователя для проверки капчи
+            token = form.smart_token.data  # сгенерированный токен для проверки капчи
+            if check_captcha(app, token, ip):  # если капча подтверждена, то продолжить обработку формы
+                db_sess = db_session.create_session()
+                user = db_sess.query(User).filter(User.email == form.email.data).first()
+                if user and user.check_password(form.password.data):
+                    # Если логин и пароль введены верно, сохранение данных в куки и перенапрваление на страницу,
+                    # которая в зависимости от роли направляет на нужную страницу
+                    login_user(user)
+                    return redirect('/workspace')
+                return render_template('login.html', message="Wrong login or password",
+                                       form=form, style=url_for('static', filename='css/style.css'), title='Вход',
+                                       captcha_key=SMARTCAPTCHA_CLIENT_KEY)
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователю страницы, вывод сообщения об ошибке и логирование ошибки
         app.logger.error('An error occurred: %s', e)
         flash('Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
     return render_template('login.html', title='Вход',
-                           form=form, style=url_for('static', filename='css/style.css'))
+                           form=form, style=url_for('static', filename='css/style.css'),
+                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
 
+# Обработчик рабочей страницы ОУ
 @app.route('/university_workspace', methods=['POST', 'GET'])
 @login_required
 def university_workspace():
@@ -303,7 +352,7 @@ def university_workspace():
                                                       Achievement.end_date == ""),
                                                   Achievement.approve_path == None
                                                   ).all()
-
+        # обработка формы поиска студента
         if form_find.validate_on_submit() and form_find.find_submit.data:
             student_id = str(form_find.find_student_id.data)
             if not student_id.isdigit():
@@ -320,11 +369,12 @@ def university_workspace():
                             Achievement.end_date == "")
                     ).all()
                     session['univer_found_student_id_cur'] = student_id
-
+        # отчистка формы
         if form_find.find_clear.data:
             session.pop('univer_found_student_id_cur', None)
             form_find.find_student_id.data = ''
 
+        # обработка формы открытия курса
         if form_open.validate_on_submit() and form_open.open_submit.data:
             student_id = str(form_open.open_student_id.data)
             if not student_id.isdigit():
@@ -347,6 +397,7 @@ def university_workspace():
                 else:
                     flash("Студент с таким ID не существует", "warning")
 
+        # обработка формы закрытия курса
         if form_close.validate_on_submit() and form_close.close_submit.data:
             student_id = str(form_close.close_student_id.data)
             if not student_id.isdigit():
@@ -400,11 +451,14 @@ def university_workspace():
                                joined_title=univer.title,
                                style=url_for('static', filename='css/style.css'))
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователя на главную страницу, вывод сообщения об ошибке и логирование ошибки
         flash(f'Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
         app.logger.error(e)
         return render_template('home.html', token=None, result=None, university=None, title='Главная')
 
 
+# обработчик принятия/отклонения достижений студента
 @app.route('/manage_proj', methods=["POST"])
 @login_required
 def manage_proj():
@@ -417,11 +471,13 @@ def manage_proj():
         if not proj:
             abort(404)
 
+        # удаление проекта, если он отклонён
         if action == 'reject':
             db_sess.delete(proj)
             db_sess.commit()
             flash("Проект отклонён и удалён", "info")
 
+        # если проект подтверждён, генерация токена и сертификата и сохранение в бд
         elif action == 'approve':
             token = tokenize()
             proj.token = token
@@ -442,11 +498,14 @@ def manage_proj():
 
         return redirect(url_for('university_workspace'))
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователя на главную страницу, вывод сообщения об ошибке и логирование ошибки
         flash(f'Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
         app.logger.error(e)
         return render_template('home.html', token=None, result=None, university=None, title='Главная')
 
 
+# обработка рабочей страницы работодателя
 @app.route('/employer_workspace', methods=['GET', 'POST'])
 @login_required
 def employer_workspace():
@@ -460,6 +519,7 @@ def employer_workspace():
         user = db_sess.query(User).get(current_user.id)
         employer = user.employer
 
+        # вывод таблицы студентов, у которых есть оконченные достижения
         all_students = db_sess.query(Student).all()
         for student in all_students:
             cur_student_achs = db_sess.query(Achievement).filter(
@@ -473,7 +533,7 @@ def employer_workspace():
                     'nsp': student.student_nsp,
                     'achievement_title': ', '.join([f'"{ach.title}"' for ach in cur_student_achs])
                 })
-
+        # обработка формы поиска студента
         if form.validate_on_submit():
             if form.clear.data:
                 return redirect(url_for('employer_workspace'))
@@ -508,7 +568,7 @@ def employer_workspace():
                             })
                         session['student_id_current'] = student.id
                         session['entered_student_id_current'] = entered_student_id
-
+            # обработка приглашения студента
             elif form.invite.data:
                 student = db_sess.query(Student).get(session.pop('student_id_current'))
                 entered_student_id = session.pop('entered_student_id_current')
@@ -536,11 +596,14 @@ def employer_workspace():
                                style=url_for('static', filename='css/style.css'),
                                title='Работодатель')
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователя на главную страницу, вывод сообщения об ошибке и логирование ошибки
         flash(f'Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
         app.logger.error(e)
         return render_template('home.html', token=None, result=None, university=None, title='Главная')
 
 
+# обработчик рабочей страницы студента
 @app.route('/student_workspace', methods=['GET', 'POST'])
 @login_required
 def student_workspace():
@@ -559,6 +622,7 @@ def student_workspace():
 
         univers = db_sess.query(University).all()
         form.univer_title.choices = [(u.title, u.title) for u in univers]
+        # обработчик формы добавления достижений
         if form.validate_on_submit():
             ach = form.file.data
             _, ext = os.path.splitext(form.file.data.filename)
@@ -591,7 +655,7 @@ def student_workspace():
                 'boss_nsp': e.boss_nsp,
                 'phone_num': e.phone_num
             })
-
+        # вывод достижений/курсов
         approved_achievements = db_sess.query(Achievement).filter(
             Achievement.student_id == student.id,
             Achievement.approve_path.isnot(None),
@@ -666,11 +730,14 @@ def student_workspace():
                                style=url_for('static', filename='css/style.css'),
                                title='Студент')
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователя на главную страницу, вывод сообщения об ошибке и логирование ошибки
         flash(f'Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
         app.logger.error(e)
         return render_template('home.html', token=None, result=None, university=None, title='Главная')
 
 
+# обработчик страницы личного кабинета
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
@@ -679,6 +746,7 @@ def profile():
         user = db_sess.query(User).get(current_user.id)
         born = ''
 
+        # загрузка нужной формы в зависимости от роли пользователя
         if user.role == 'student':
             profile = db_sess.query(Student).filter_by(user_id=user.id).first()
             born = profile.born.strftime('%d.%m.%Y')
@@ -694,7 +762,7 @@ def profile():
                   'Коллледж', 'Училище', 'Онлайн-курс', 'Другое']
             if profile.type in ch and form.type.data in ch:
                 form.type.data = str(ch.index(profile.type) + 1)
-
+        # обработка формы изменения данных пользователя
         if form.validate_on_submit():
             form.populate_obj(profile)
             if user.role == 'university':
@@ -702,6 +770,7 @@ def profile():
 
             cur_pw = form.current_password.data
             new_pw = form.new_password.data
+            # если пользователь изменил пароль, то изменение пароля в бд
             if new_pw:
                 if not cur_pw or not user.check_password(cur_pw):
                     flash('Текущий пароль введён неверно', 'danger')
@@ -711,6 +780,7 @@ def profile():
                 db_sess.commit()
                 flash('Профиль успешно обновлён', 'success')
             except Exception as e:
+                # логирование непредвиденной ошибки при сохранении данных и откат бд
                 db_sess.rollback()
                 app.logger.error(e)
             return redirect(url_for('profile'))
@@ -719,11 +789,14 @@ def profile():
         return render_template('profile.html', form=form, role=user.role, title='Личный кабинет', user=user,
                                style=url_for('static', filename='css/style.css'), born=born)
     except Exception as e:
+        # Если произошла непредвиденная ошибка,
+        # возврат пользователя на главную страницу, вывод сообщения об ошибке и логирование ошибки
         flash(f'Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
         app.logger.error(e)
         return render_template('home.html', token=None, result=None, university=None, title='Главная')
 
 
+# обработчик для просмотра и скачивания сертификатов
 @app.route("/check/certificate/<title>/<file_name>")
 def certificate(title, file_name):
     try:
@@ -736,6 +809,7 @@ def certificate(title, file_name):
         return render_template('home.html', token=None, result=None, university=None, title='Главная')
 
 
+# обработчик скачивания файлов достижения
 @app.route("/download/achievement/<title>/<filename>")
 def download_ach(title, filename):
     try:
@@ -755,6 +829,7 @@ def download_ach(title, filename):
         app.logger.error(e)
 
 
+# перенаправление пользователя на нужную страницу в зависимости от роли
 @app.route('/workspace')
 @login_required
 def workspace():
@@ -776,6 +851,7 @@ def workspace():
         return render_template('home.html', token=None, result=None, university=None, title='Главная')
 
 
+# изменение страниц ошибок, на кастомные
 @app.route('/errors')
 def errors():
     abort(404)
@@ -828,6 +904,7 @@ def service_unavailable(e):
 
 def main():
     try:
+        # запуск сервера
         db_session.global_init("db/EduCred_data.db")
         port = int(os.environ.get("PORT", 8000))
         app.run(host='0.0.0.0', port=port)

@@ -26,7 +26,8 @@ from data.Achievements import Achievement
 from data.find_info_by_INN import get_info_by_inn
 from data.cert_creating import tokenize, pdf_creating
 from data.ProfileForms import StudentProfileForm, EmployerProfileForm, UniversityProfileForm
-from data.config import secret_token
+from data.config import secret_token, SMARTCAPTCHA_SERVER_KEY, SMARTCAPTCHA_CLIENT_KEY
+from data.captcha_func import check_captcha
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = secret_token
@@ -103,7 +104,7 @@ def register_university():
                                        title='Регистрация образовательного учреждения',
                                        form=form, style=url_for('static', filename='css/style.css'),
                                        message="This University already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first() or\
+            if db_sess.query(User).filter(User.email == form.email.data).first() or \
                     any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
                 return render_template('register_university.html',
                                        title='Регистрация образовательного учреждения',
@@ -175,7 +176,7 @@ def register_employer():
                 return render_template('register_employer.html', title='Регистрация работодателя',
                                        form=form, style=url_for('static', filename='css/style.css'),
                                        message="This Employer already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first() or\
+            if db_sess.query(User).filter(User.email == form.email.data).first() or \
                     any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
                 return render_template('register_employer.html', title='Регистрация работодателя',
                                        form=form, style=url_for('static', filename='css/style.css'),
@@ -230,7 +231,7 @@ def register_student():
                 return render_template('register_student.html', title='Регистрация студента',
                                        form=form, style=url_for('static', filename='css/style.css'),
                                        message="This Student already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first() or\
+            if db_sess.query(User).filter(User.email == form.email.data).first() or \
                     any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
                 return render_template('register_student.html', title='Регистрация студента',
                                        form=form, style=url_for('static', filename='css/style.css'),
@@ -270,18 +271,23 @@ def login():
     form = LoginForm()
     try:
         if form.validate_on_submit():
-            db_sess = db_session.create_session()
-            user = db_sess.query(User).filter(User.email == form.email.data).first()
-            if user and user.check_password(form.password.data):
-                login_user(user)
-                return redirect('/workspace')
-            return render_template('login.html', message="Wrong login or password",
-                                   form=form, style=url_for('static', filename='css/style.css'), title='Вход')
+            ip = request.remote_addr
+            token = form.smart_token.data
+            if check_captcha(app, token, ip):
+                db_sess = db_session.create_session()
+                user = db_sess.query(User).filter(User.email == form.email.data).first()
+                if user and user.check_password(form.password.data):
+                    login_user(user)
+                    return redirect('/workspace')
+                return render_template('login.html', message="Wrong login or password",
+                                       form=form, style=url_for('static', filename='css/style.css'), title='Вход',
+                                       captcha_key=SMARTCAPTCHA_CLIENT_KEY)
     except Exception as e:
         app.logger.error('An error occurred: %s', e)
         flash('Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
     return render_template('login.html', title='Вход',
-                           form=form, style=url_for('static', filename='css/style.css'))
+                           form=form, style=url_for('static', filename='css/style.css'),
+                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
 
 @app.route('/university_workspace', methods=['POST', 'GET'])

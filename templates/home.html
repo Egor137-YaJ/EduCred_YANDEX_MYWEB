@@ -8,7 +8,7 @@
                 type="text"
                 name="token"
                 class="form-control"
-                placeholder="Введите токен достижения"
+                placeholder="Введите токен достижения для проверки"
                 value="{{ token or '' }}"
                 required
         />
@@ -49,31 +49,31 @@
             </p>
             <div class="d-flex align-items-center gap-3">
                 {% if achievement.approve_path != 'Not Required' %}
-                    <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.approve_path.split('/')[1] }}"
-                       target="_blank"
-                       class="btn btn-success">
-                        Открыть сертификат подтверждения
-                    </a>
-                    {% set ext = achievement.file_path.split('.')[-1].lower() %}
-                    {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
-                        <audio controls>
-                            <source src="{{ url_for('static', filename=achievement.file_path) }}" type="audio/mpeg">
-                            Ваш браузер не поддерживает аудио.
-                        </audio>
-                    {% else %}
-                        <a href="{{ url_for('download_ach',
+                <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.approve_path.split('/')[1] }}"
+                   target="_blank"
+                   class="btn btn-success">
+                    Открыть сертификат подтверждения
+                </a>
+                {% set ext = achievement.file_path.split('.')[-1].lower() %}
+                {% if ext in ['mp3', 'wav', 'aac', 'ogg', 'oga', 'flac'] %}
+                <audio controls>
+                    <source src="{{ url_for('static', filename=achievement.file_path) }}" type="audio/mpeg">
+                    Ваш браузер не поддерживает аудио.
+                </audio>
+                {% else %}
+                <a href="{{ url_for('download_ach',
                                             title=achievement.title,
                                             filename=achievement.file_path.split('/')[-1]) }}"
-                           class="btn btn-outline-primary btn-sm">
-                            Скачать файл достижения
-                        </a>
-                    {% endif %}
+                   class="btn btn-outline-primary btn-sm">
+                    Скачать файл достижения
+                </a>
+                {% endif %}
                 {% else %}
-                    <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.file_path.split('/')[1] }}"
-                       target="_blank"
-                       class="btn btn-success">
-                        Открыть сертификат
-                    </a>
+                <a href="{{ 'check/certificate/' + achievement.title + '/' + achievement.file_path.split('/')[1] }}"
+                   target="_blank"
+                   class="btn btn-success">
+                    Открыть сертификат
+                </a>
                 {% endif %}
             </div>
         </div>
@@ -82,4 +82,72 @@
     {% endwith %}
 
 </div>
+<!-- Hero-блок -->
+<section class="py-5 bg-primary text-white text-center">
+    <div class="container">
+        <h1 class="display-4">Добро пожаловать в EduCred</h1>
+        <p class="lead">Ваш надёжный сервис для верификации достижений</p>
+    </div>
+</section>
+
+<!-- О нас -->
+<section id="about" class="py-5">
+    <div class="container">
+        <h2 class="mb-4">О нас</h2>
+        <p>EduCred — это единая платформа для учёта и верификации образовательных достижений. Мы даём возможность:</p>
+        <ul>
+            <li>Вести учёт образовательных курсов и добавлять свои достижения</уч>;</li>
+            <li>Генерировать сертификаты в PDF с уникальным токеном;</li>
+            <li>Проверять валидность сертификатов по токенам.</li>
+        </ul>
+    </div>
+</section>
+
+
+<!-- Как это работает -->
+<section id="how" class="py-5 bg-light">
+    <div class="container">
+        <h2 class="mb-4 text-center">Как это работает</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm text-center p-4">
+                    <i class="bi bi-person-plus-fill fs-1 mb-3"></i>
+                    <h5 class="mb-2">Регистрация</h5>
+                    <p class="mb-0">Выбираете свою роль, заполняете профиль и входите в систему.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm text-center p-4">
+                    <i class="bi bi-journal-check fs-1 mb-3"></i>
+                    <h5 class="mb-2">Управление достижениями</h5>
+                    <p class="mb-0">Добавляйте и подтверждайте образовательные курсы и достижения.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm text-center p-4">
+                    <i class="bi bi-file-earmark-medical-fill fs-1 mb-3"></i>
+                    <h5 class="mb-2">Получение сертификата</h5>
+                    <p class="mb-0">По завершении генерируется PDF‑сертификат с уникальным токеном.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Контакты -->
+<footer id="contact" class="py-5 bg-dark text-white">
+    <div class="container text-center">
+        <h5>Авторы проекта</h5>
+        <p>Волков Максим</p>
+        <p>Подвысоцкий Константин</p>
+        <p>Сидельников Егор</p>
+        <p class="mt-4 mb-0">&copy; 2025 EduCred</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+        rel="stylesheet"
+/>
 {% endblock %}

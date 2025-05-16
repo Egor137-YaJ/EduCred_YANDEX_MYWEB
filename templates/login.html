@@ -22,8 +22,9 @@
             class="smart-captcha"
             data-sitekey="{{ captcha_key }}"
     >
-    {{ form.captcha_token }}
-</div><br>
+        {{ form.smart_token }}
+    </div>
+    <br>
     {% for error in form.password.errors %}
     <div class="alert alert-danger" role="alert">
         {{ error }}

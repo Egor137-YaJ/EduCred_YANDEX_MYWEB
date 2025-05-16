@@ -93,73 +93,78 @@ def register_university():
     form = RegisterUniverForm()
     try:
         if form.validate_on_submit():
-            if form.password.data != form.password_again.data:
-                return render_template('register_university.html',
-                                       title='Регистрация образовательного учреждения',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Passwords don't match")
-            db_sess = db_session.create_session()
-            if db_sess.query(University).filter(University.INN == form.INN.data).first():
-                return render_template('register_university.html',
-                                       title='Регистрация образовательного учреждения',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="This University already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first() or \
-                    any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-                return render_template('register_university.html',
-                                       title='Регистрация образовательного учреждения',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Existing data, retry please")
-
-            title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
-            type = dict(form.type.choices).get(form.type.data)
-            if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-                return render_template('register_university.html',
-                                       title='Регистрация образовательного учреждения',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Error in INN request - may be non existing INN")
-
-            if type.lower() not in ['онлайн-курс', 'другое']:
-                if type.lower() not in check.lower():
+            ip = request.remote_addr
+            token = form.smart_token.data
+            if check_captcha(app, token, ip):
+                if form.password.data != form.password_again.data:
                     return render_template('register_university.html',
                                            title='Регистрация образовательного учреждения',
                                            form=form, style=url_for('static', filename='css/style.css'),
-                                           message="Types doesn't match")
-            else:
-                if any(type_n.lower() in title.lower() for type_n in list(map(str.lower, choices))):
+                                           message="Passwords don't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                db_sess = db_session.create_session()
+                if db_sess.query(University).filter(University.INN == form.INN.data).first():
                     return render_template('register_university.html',
                                            title='Регистрация образовательного учреждения',
                                            form=form, style=url_for('static', filename='css/style.css'),
-                                           message="Types doesn't match")
-            user = User(
-                email=form.email.data,
-                role='university'
-            )
-            user.set_password(form.password.data)
-            db_sess.add(user)
-            db_sess.commit()
-            if ';' in title:
-                title = title.split(';')[1]
-            elif ',' in title:
-                title = title.split(', ')[1]
-            univer = University(
-                user_id=user.id,
-                INN=form.INN.data,
-                title=title,
-                address=address,
-                boss_nsp=boss_nsp,
-                type=type
-            )
-            db_sess.add(univer)
-            db_sess.commit()
-            login_user(user)
-            return redirect('/university_workspace')
+                                           message="This University already exists", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                if db_sess.query(User).filter(User.email == form.email.data).first() or \
+                        any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
+                    return render_template('register_university.html',
+                                           title='Регистрация образовательного учреждения',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Existing data, retry please", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+
+                title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
+                type = dict(form.type.choices).get(form.type.data)
+                if 'Ошибка' in ' '.join([title, address, boss_nsp]):
+                    return render_template('register_university.html',
+                                           title='Регистрация образовательного учреждения',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Error in INN request - may be non existing INN",
+                                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+
+                if type.lower() not in ['онлайн-курс', 'другое']:
+                    if type.lower() not in check.lower():
+                        return render_template('register_university.html',
+                                               title='Регистрация образовательного учреждения',
+                                               form=form, style=url_for('static', filename='css/style.css'),
+                                               message="Types doesn't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                else:
+                    if any(type_n.lower() in title.lower() for type_n in list(map(str.lower, choices))):
+                        return render_template('register_university.html',
+                                               title='Регистрация образовательного учреждения',
+                                               form=form, style=url_for('static', filename='css/style.css'),
+                                               message="Types doesn't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                user = User(
+                    email=form.email.data,
+                    role='university'
+                )
+                user.set_password(form.password.data)
+                db_sess.add(user)
+                db_sess.commit()
+                if ';' in title:
+                    title = title.split(';')[1]
+                elif ',' in title:
+                    title = title.split(', ')[1]
+                univer = University(
+                    user_id=user.id,
+                    INN=form.INN.data,
+                    title=title,
+                    address=address,
+                    boss_nsp=boss_nsp,
+                    type=type
+                )
+                db_sess.add(univer)
+                db_sess.commit()
+                login_user(user)
+                return redirect('/university_workspace')
     except Exception as e:
         app.logger.error('An error occurred: %s', e)
         flash('Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
     return render_template('register_university.html',
                            title='Регистрация образовательного учреждения',
-                           form=form, style=url_for('static', filename='css/style.css'))
+                           form=form, style=url_for('static', filename='css/style.css'),
+                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
 
 @app.route('/register_employer', methods=['GET', 'POST'])
@@ -167,52 +172,57 @@ def register_employer():
     form = RegisterEmployerForm()
     try:
         if form.validate_on_submit():
-            if form.password.data != form.password_again.data:
-                return render_template('register_employer.html', title='Регистрация работодателя',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Passwords don't match")
-            db_sess = db_session.create_session()
-            if db_sess.query(Employer).filter(Employer.INN == form.INN.data).first():
-                return render_template('register_employer.html', title='Регистрация работодателя',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="This Employer already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first() or \
-                    any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-                return render_template('register_employer.html', title='Регистрация работодателя',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Existing data, retry please")
+            ip = request.remote_addr
+            token = form.smart_token.data
+            if check_captcha(app, token, ip):
+                if form.password.data != form.password_again.data:
+                    return render_template('register_employer.html', title='Регистрация работодателя',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Passwords don't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                db_sess = db_session.create_session()
+                if db_sess.query(Employer).filter(Employer.INN == form.INN.data).first():
+                    return render_template('register_employer.html', title='Регистрация работодателя',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="This Employer already exists", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                if db_sess.query(User).filter(User.email == form.email.data).first() or \
+                        any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
+                    return render_template('register_employer.html', title='Регистрация работодателя',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Existing data, retry please", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
-            title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
-            if 'Ошибка' in ' '.join([title, address, boss_nsp]):
-                return render_template('register_employer.html', title='Регистрация работодателя',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Error in INN request - may be non existing INN")
+                title, address, boss_nsp, check = get_info_by_inn(form.INN.data)
+                if 'Ошибка' in ' '.join([title, address, boss_nsp]):
+                    return render_template('register_employer.html', title='Регистрация работодателя',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Error in INN request - may be non existing INN",
+                                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
-            user = User(
-                email=form.email.data,
-                role='employer'
-            )
-            user.set_password(form.password.data)
-            db_sess.add(user)
-            db_sess.commit()
-            employer = Employer(
-                user_id=user.id,
-                INN=form.INN.data,
-                title=title,
-                address=address,
-                boss_nsp=boss_nsp,
-                phone_num=form.phone_number.data,
-                scope=form.speciality.data,
-            )
-            db_sess.add(employer)
-            db_sess.commit()
-            login_user(user)
-            return redirect('/employer_workspace')
+                user = User(
+                    email=form.email.data,
+                    role='employer'
+                )
+                user.set_password(form.password.data)
+                db_sess.add(user)
+                db_sess.commit()
+                employer = Employer(
+                    user_id=user.id,
+                    INN=form.INN.data,
+                    title=title,
+                    address=address,
+                    boss_nsp=boss_nsp,
+                    phone_num=form.phone_number.data,
+                    scope=form.speciality.data,
+                )
+                db_sess.add(employer)
+                db_sess.commit()
+                login_user(user)
+                return redirect('/employer_workspace')
     except Exception as e:
         app.logger.error('An error occurred: %s', e)
         flash('Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
     return render_template('register_employer.html', title='Регистрация работодателя',
-                           form=form, style=url_for('static', filename='css/style.css'))
+                           form=form, style=url_for('static', filename='css/style.css'),
+                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
 
 @app.route('/register_student', methods=['GET', 'POST'])
@@ -220,50 +230,54 @@ def register_student():
     form = RegisterStudentForm()
     try:
         if form.validate_on_submit():
-            if form.password.data != form.password_again.data:
-                return render_template('register_student.html', title='Регистрация студента',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Passwords don't match")
-            db_sess = db_session.create_session()
-            if db_sess.query(Student).filter(Student.student_nsp == form.NSP.data,
-                                             Student.born == form.born_date.data,
-                                             Student.phone_num == form.phone_number.data).first():
-                return render_template('register_student.html', title='Регистрация студента',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="This Student already exists")
-            if db_sess.query(User).filter(User.email == form.email.data).first() or \
-                    any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
-                return render_template('register_student.html', title='Регистрация студента',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Existing data, retry please")
-            if form.born_date.data.year < 1940:
-                return render_template('register_student.html', title='Регистрация студента',
-                                       form=form, style=url_for('static', filename='css/style.css'),
-                                       message="Non existing born date")
+            ip = request.remote_addr
+            token = form.smart_token.data
+            if check_captcha(app, token, ip):
+                if form.password.data != form.password_again.data:
+                    return render_template('register_student.html', title='Регистрация студента',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Passwords don't match", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                db_sess = db_session.create_session()
+                if db_sess.query(Student).filter(Student.student_nsp == form.NSP.data,
+                                                 Student.born == form.born_date.data,
+                                                 Student.phone_num == form.phone_number.data).first():
+                    return render_template('register_student.html', title='Регистрация студента',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="This Student already exists", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                if db_sess.query(User).filter(User.email == form.email.data).first() or \
+                        any(user.check_password(form.password.data) for user in db_sess.query(User).all()):
+                    return render_template('register_student.html', title='Регистрация студента',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Existing data, retry please", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
+                if form.born_date.data.year < 1940:
+                    return render_template('register_student.html', title='Регистрация студента',
+                                           form=form, style=url_for('static', filename='css/style.css'),
+                                           message="Non existing born date", captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
-            user = User(
-                email=form.email.data,
-                role='student'
-            )
-            user.set_password(form.password.data)
-            db_sess.add(user)
-            db_sess.commit()
-            student = Student(
-                user_id=user.id,
-                student_nsp=form.NSP.data,
-                born=form.born_date.data,
-                phone_num=form.phone_number.data,
-                about=form.about.data,
-            )
-            db_sess.add(student)
-            db_sess.commit()
-            login_user(user)
-            return redirect('/student_workspace')
+                user = User(
+                    email=form.email.data,
+                    role='student'
+                )
+                user.set_password(form.password.data)
+                db_sess.add(user)
+                db_sess.commit()
+                student = Student(
+                    user_id=user.id,
+                    student_nsp=form.NSP.data,
+                    born=form.born_date.data,
+                    phone_num=form.phone_number.data,
+                    about=form.about.data,
+                )
+                db_sess.add(student)
+                db_sess.commit()
+                login_user(user)
+                return redirect('/student_workspace')
     except Exception as e:
         app.logger.error('An error occurred: %s', e)
         flash('Произошла неизвестная ошибка, попробуйте ещё раз', 'danger')
     return render_template('register_student.html', title='Регистрация студента',
-                           form=form, style=url_for('static', filename='css/style.css'))
+                           form=form, style=url_for('static', filename='css/style.css'),
+                           captcha_key=SMARTCAPTCHA_CLIENT_KEY)
 
 
 @app.route('/login', methods=['GET', 'POST'])

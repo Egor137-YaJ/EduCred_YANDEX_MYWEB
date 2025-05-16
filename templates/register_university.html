@@ -16,7 +16,7 @@
         {{ form.csrf_token }}
     </div>
 
-    {% for field in form if field.name != 'csrf_token' and field.name != 'submit' %}
+    {% for field in form if field.name != 'csrf_token' and field.name != 'submit' and field.name != 'smart-token' %}
     <div>
         <h3>{{ field.label() }}</h3>
         {{ field() }}
@@ -29,6 +29,15 @@
     </div>
     <br>
     {% endfor %}
+    <div
+            id="captcha-container"
+            class="smart-captcha"
+            data-sitekey="{{ captcha_key }}"
+    >
+        {{ form.smart_token }}
+    </div>
+    <br>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
 </form>
+<script src="https://smartcaptcha.yandexcloud.net/captcha.js" defer></script>
 {% endblock %}

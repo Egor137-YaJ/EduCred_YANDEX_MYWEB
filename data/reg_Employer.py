@@ -34,4 +34,5 @@ class RegisterEmployerForm(FlaskForm):
     email = EmailField('Почта', validators=[DataRequired(), Email('Некорректный email')])
     password = PasswordField('Пароль', validators=[DataRequired(), password_complexity])
     password_again = PasswordField('Повторите пароль', validators=[DataRequired()])
+    smart_token = StringField('', render_kw={'type': 'hidden'}, name='smart-token')
     submit = SubmitField('Подтвердить')

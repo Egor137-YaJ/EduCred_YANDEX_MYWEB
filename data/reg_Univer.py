@@ -40,4 +40,5 @@ class RegisterUniverForm(FlaskForm):
     email = EmailField('Почта', validators=[DataRequired(), Email('Некорректный email')])
     password = PasswordField('Пароль', validators=[DataRequired(), password_complexity])
     password_again = PasswordField('Повторите пароль', validators=[DataRequired(), equal_to('password')])
+    smart_token = StringField('', render_kw={'type': 'hidden'}, name='smart-token')
     submit = SubmitField('Подтвердить')

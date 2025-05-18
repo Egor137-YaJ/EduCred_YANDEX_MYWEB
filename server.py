@@ -910,6 +910,11 @@ def service_unavailable(e):
     return render_template('errors.html', error='503', title='503 - Сервис временно недоступен'), 503
 
 
+@app.errorhandler(504)
+def service_unavailable(e):
+    return render_template('errors.html', error='504', title='504 - Сервис временно недоступен'), 504
+
+
 def main():
     try:
         # запуск сервера
@@ -923,6 +928,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-    # My web: https://precious-fluoridated-muskox.glitch.me/
-    # create git with only this directory on git. just files of that github
-    # My Projects: https://glitch.com/dashboard?group=owned&sortColumn=boost&sortDirection=DESC&page=1&showAll=false&filterDomain=
+
+# My web: https://precious-fluoridated-muskox.glitch.me/
+# create git with only this directory on git. just files of that github
+# My Projects: https://glitch.com/dashboard?group=owned&sortColumn=boost&sortDirection=DESC&page=1&showAll=false&filterDomain=

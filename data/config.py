@@ -1,4 +1,4 @@
 secret_token = "yandexlyceum_secret_key"
 dadata_token = "d7a26c02b1fcfcc8aae5223ef09ae3737377dccb"
-SMARTCAPTCHA_CLIENT_KEY = 'ysc1_4S2dGL3bjjn2HDgJCJ6CzgmwVvDfGBQEPGUnneCo5545d8bc'
-SMARTCAPTCHA_SERVER_KEY = 'ysc2_4S2dGL3bjjn2HDgJCJ6CU88lVEVQFFY29akeXfcD8cf5dfd6'
+SMARTCAPTCHA_CLIENT_KEY = ''
+SMARTCAPTCHA_SERVER_KEY = ''

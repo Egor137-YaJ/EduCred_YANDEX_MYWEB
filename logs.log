@@ -54,3 +54,8 @@ TypeError: wtforms.widgets.core.html_params() got multiple values for keyword ar
 2025-05-16 17:09:11,169 | ERROR    | server | An error occurred: 'AnonymousUserMixin' object has no attribute 'id'
 2025-05-16 17:09:37,637 | ERROR    | server | An error occurred: 'AnonymousUserMixin' object has no attribute 'id'
 2025-05-16 17:09:53,639 | ERROR    | server | An error occurred: 'AnonymousUserMixin' object has no attribute 'id'
+2025-05-18 15:14:04,874 | ERROR    | server | (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-05-18 15:14:59,446 | ERROR    | server | (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-05-18 15:15:29,218 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}

@@ -108,6 +108,7 @@
             <thead class="table-light">
             <tr>
                 <th>Название проекта</th>
+                <th>ФИО Студента</th>
                 <th>Дата написания</th>
                 <th>файл</th>
                 <th>Действие</th>
@@ -117,6 +118,7 @@
             {% for proj in projs %}
                 <tr>
                     <td>{{ proj.title }}</td>
+                    <td>{{ proj.student.student_nsp }}</td>
                     <td>{{ proj.start_date.strftime("%d.%m.%Y") }}</td>
                     <td>
                         {% set ext = proj.file_path.split('.')[-1].lower() %}

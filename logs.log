@@ -59,3 +59,23 @@ TypeError: wtforms.widgets.core.html_params() got multiple values for keyword ar
 2025-05-18 15:14:59,446 | ERROR    | server | (sqlite3.OperationalError) unable to open database file
 (Background on this error at: https://sqlalche.me/e/20/e3q8)
 2025-05-18 15:15:29,218 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 12:09:55,228 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 12:10:12,777 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 12:11:07,735 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 12:12:54,859 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 12:18:52,151 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 12:32:08,625 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 12:35:30,633 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 12:41:52,687 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 12:42:03,821 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:11:19,385 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:17:44,643 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:20:06,070 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:20:43,002 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:20:53,153 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:21:36,841 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:25:12,487 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:25:24,750 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:25:34,615 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:25:59,260 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
+2025-05-25 13:36:25,750 | ERROR    | server | Allow access due to an error: code=403; message={"status":"failed","message":"Authentication failed. Invalid secret."}
